@@ -40,8 +40,8 @@ async function setLive() {
   await chrome.action.setIcon({
     path: { 16: "icons/icon-16.png", 32: "icons/icon-32.png", 48: "icons/icon-48.png", 128: "icons/icon-128.png" }
   });
-  await chrome.action.setBadgeBackgroundColor({ color: "#111111" });
-  await chrome.action.setBadgeTextColor?.({ color: "#B9E2CE" });
+  await chrome.action.setBadgeBackgroundColor({ color: "#B9E2CE" });
+  await chrome.action.setBadgeTextColor?.({ color: "#16151c" });
   await chrome.action.setBadgeText({ text: "LIVE" });
   await chrome.action.setTitle({ title: "TVABDOU est EN LIVE !" });
 }

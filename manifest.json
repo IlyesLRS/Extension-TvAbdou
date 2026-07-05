@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TVABDOU - Live Tracker",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Savoir si TVABDOU est en live, voir la derniere VOD, le planning, les dernieres videos et recevoir des notifications.",
   "permissions": ["storage", "notifications", "alarms"],
   "host_permissions": [

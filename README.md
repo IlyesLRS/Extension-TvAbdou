@@ -36,7 +36,19 @@ par l'URL de ton proxy.
 
 ### Installer l'extension
 1. `chrome://extensions` → active **Mode développeur**.
-2. **Charger l'extension non empaquetée** → sélectionne ce dossier.
+2. **Charger l'extension non empaquetée** → sélectionne **ce dossier** (celui qui
+   contient `manifest.json`).
+
+### Mettre à jour (un simple « Recharger » suffit)
+Charge l'extension **depuis un dossier stable** (ce dossier projet), pas depuis un
+zip décompressé à chaque fois. Ensuite, à chaque nouvelle version, il suffit de
+cliquer le bouton **↻ Recharger** sur la carte de l'extension dans
+`chrome://extensions` — la nouvelle permission et les nouveaux fichiers sont pris
+en compte automatiquement.
+
+> Le champ `key` du manifest fige l'identifiant de l'extension : même rechargée
+> depuis un autre dossier, elle reste **la même extension** (réglages conservés,
+> pas de doublon).
 
 ## Personnalisation
 Tout est dans [`config.js`](config.js) : `twitchLogin`, `planningUrl`, `socials`,

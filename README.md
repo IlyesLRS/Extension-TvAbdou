@@ -1,61 +1,109 @@
-# TVABDOU — Live Tracker (extension navigateur)
+<div align="center">
 
-Extension Chrome / Edge (Manifest V3) qui affiche si **TVABDOU** est en live, la
-dernière VOD, le planning et les dernières vidéos YouTube, avec notifications.
+# TVABDOU — Live Tracker
 
-> **Aucune clé API dans l'extension.** Les clés Twitch/YouTube vivent dans un petit
-> proxy Vercel (dossier [`server/`](server/)). L'utilisateur n'a **rien à configurer** :
-> il installe et ça marche.
+**Extension navigateur (Chrome / Edge) pour suivre [TVABDOU](https://twitch.tv/tvabdou) en un coup d'œil.**
 
-## Fonctionnalités
-- 🟣 **Badge sur l'icône** : `LIVE` quand il stream, `OFF` sinon (l'icône est son avatar).
-- **Onglet Live / VOD** : titre, viewers et durée du stream en direct ; sinon la
-  dernière VOD (date, durée, vues).
-- **Réseaux** : Twitch, YouTube, Patreon, Discord.
-- **Onglet Planning** : intégration en direct de https://planning-live.vercel.app/
-- **Onglet Vidéos** : les 3 dernières vidéos YouTube.
-- **Notifications** : passage en live + nouvelle vidéo YouTube.
-- 🔔 **Bouton pour couper/activer les notifications**.
+Sais si le stream est en live, affiche la dernière VOD, le planning, les dernières
+vidéos YouTube et les dernières publications Patreon — avec notifications.
 
-## Direction artistique
-Lavande `#C9BCF1` (principal) · Menthe `#B9E2CE` (secondaire) · Noir & blanc.
+Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
 
-## Mise en place (2 étapes)
+</div>
 
-### 1) Déployer le proxy (une seule fois)
-Suis [`server/README.md`](server/README.md) : import du dossier `server/` sur Vercel
-+ 3 variables d'environnement (`TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`,
-`YOUTUBE_API_KEY`). Tu obtiens une URL type `https://tvabdou-proxy.vercel.app`.
+---
 
-### 2) Brancher l'extension sur le proxy
-Dans [`config.js`](config.js), remplace :
-```js
-proxyBase: "https://REMPLACE-MOI.vercel.app"
+## ✨ Fonctionnalités
+
+- 🔴 **Badge d'état** sur l'icône : `LIVE` (menthe) quand il stream, `OFF` sinon.
+  L'icône est l'avatar de TVABDOU.
+- 📺 **Onglet Live / VOD**
+  - En live : miniature, titre, nombre de viewers et **durée du stream**.
+  - Hors ligne : **dernière VOD** avec sa date, sa durée et son nombre de vues.
+- 📅 **Onglet Planning** : le planning [planning-live.vercel.app](https://planning-live.vercel.app/) intégré.
+- ▶️ **Onglet Vidéos** : les **3 dernières vidéos YouTube**.
+- Ⓟ **Onglet Patreon** : les **3 dernières publications Patreon**.
+- 🔗 **Réseaux** (Twitch, YouTube, Patreon, Discord) accessibles sur chaque onglet.
+- 🔔 **Notifications** au passage en live et à chaque nouvelle vidéo YouTube,
+  avec un bouton pour les activer / couper.
+- ↻ **Bouton Actualiser** pour recharger les données à la demande (sans cache).
+
+> **Aucune clé API dans l'extension.** Les clés (Twitch, YouTube, Patreon) vivent
+> dans un petit proxy Vercel ([`server/`](server/)) — l'utilisateur n'a rien à
+> configurer, il installe et ça marche.
+
+---
+
+## 🚀 Installation
+
+1. Télécharge le `.zip` de la [dernière release](../../releases/latest) et décompresse-le
+   (ou clone ce dépôt).
+2. Ouvre `chrome://extensions` (ou `edge://extensions`).
+3. Active le **Mode développeur** (en haut à droite).
+4. Clique **Charger l'extension non empaquetée** et sélectionne le dossier
+   (celui qui contient `manifest.json`).
+
+L'icône TVABDOU apparaît dans la barre d'outils. ✅
+
+### 🔄 Mettre à jour
+Charge l'extension depuis un **dossier stable** (le dépôt cloné), puis à chaque
+mise à jour clique simplement **↻ Recharger** sur la carte de l'extension dans
+`chrome://extensions`. Le champ `key` du manifest fige l'identifiant : même
+rechargée depuis un autre dossier, c'est **la même extension** (réglages conservés).
+
+---
+
+## 🏗️ Architecture
+
 ```
-par l'URL de ton proxy.
+extension-tvAbdou/
+├── manifest.json        Manifest MV3
+├── background.js        Service worker : badge LIVE/OFF, notifications, polling
+├── popup.html/.css/.js  Interface (4 onglets + barre réseaux + bouton actualiser)
+├── config.js            Chaîne, planning, réseaux
+├── lib/api.js           Appels au proxy Vercel
+├── icons/               Avatar + icônes d'état
+└── server/              Proxy serverless Vercel (garde les clés API)
+    └── api/
+        ├── status.js    Live + dernière VOD (Twitch Helix)
+        ├── videos.js    3 dernières vidéos (YouTube Data API)
+        └── patreon.js   3 dernières publications (Patreon API)
+```
 
-### Installer l'extension
-1. `chrome://extensions` → active **Mode développeur**.
-2. **Charger l'extension non empaquetée** → sélectionne **ce dossier** (celui qui
-   contient `manifest.json`).
+L'extension ne parle qu'au **proxy** ; le proxy détient les clés (variables
+d'environnement Vercel) et n'expose que des données publiques.
 
-### Mettre à jour (un simple « Recharger » suffit)
-Charge l'extension **depuis un dossier stable** (ce dossier projet), pas depuis un
-zip décompressé à chaque fois. Ensuite, à chaque nouvelle version, il suffit de
-cliquer le bouton **↻ Recharger** sur la carte de l'extension dans
-`chrome://extensions` — la nouvelle permission et les nouveaux fichiers sont pris
-en compte automatiquement.
+---
 
-> Le champ `key` du manifest fige l'identifiant de l'extension : même rechargée
-> depuis un autre dossier, elle reste **la même extension** (réglages conservés,
-> pas de doublon).
+## ⚙️ Configuration du proxy (une seule fois)
 
-## Personnalisation
-Tout est dans [`config.js`](config.js) : `twitchLogin`, `planningUrl`, `socials`,
-`pollMinutes`. Les identifiants de chaîne (login Twitch, handle YouTube) côté données
-se règlent via les variables d'environnement du proxy.
+Voir [`server/README.md`](server/README.md) pour le détail. En résumé :
 
-## Sécurité
+1. Importe le dossier `server/` sur [Vercel](https://vercel.com/new)
+   (**Root Directory = `server`**).
+2. Ajoute les variables d'environnement :
+
+   | Variable | Rôle |
+   |----------|------|
+   | `TWITCH_CLIENT_ID` | Twitch (live + VOD) |
+   | `TWITCH_CLIENT_SECRET` | Twitch |
+   | `YOUTUBE_API_KEY` | YouTube (onglet Vidéos + notifs) |
+   | `PATREON_ACCESS_TOKEN` | Patreon (onglet Patreon) |
+
+3. Déploie, puis renseigne l'URL du proxy dans [`config.js`](config.js) (`proxyBase`).
+
+---
+
+## 🎨 Personnalisation
+
+Tout est dans [`config.js`](config.js) : `proxyBase`, `twitchLogin`, `planningUrl`,
+`socials`, `pollMinutes`. Les identifiants de chaîne (login Twitch, handle YouTube,
+campagne Patreon) se règlent via les variables d'environnement du proxy.
+
+---
+
+## 🔒 Sécurité
+
 Les clés API ne sont **jamais** dans l'extension ni sur GitHub : elles restent dans
-les variables d'environnement Vercel, côté serveur. Le proxy n'expose que des données
-publiques (statut live, VOD, vidéos).
+les variables d'environnement Vercel, côté serveur. Le proxy n'expose que des
+données publiques (statut live, VOD, vidéos, publications).

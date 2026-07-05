@@ -21,7 +21,8 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
    | `TWITCH_CLIENT_SECRET` | ton Client Secret Twitch |
    | `YOUTUBE_API_KEY` | ta clé API YouTube |
    | `TWITCH_LOGIN` | `tvabdou` *(optionnel)* |
-   | `YOUTUBE_HANDLE` | `@dikabdou` *(optionnel)* |
+   | `YOUTUBE_HANDLE` | `@hdkabdou` *(optionnel)* |
+   | `YOUTUBE_CHANNEL_ID` | `UC...` *(optionnel, prioritaire sur le handle)* |
 6. **Deploy**. Tu obtiens une URL du type `https://tvabdou-proxy.vercel.app`.
 
 ### Option B — via la CLI

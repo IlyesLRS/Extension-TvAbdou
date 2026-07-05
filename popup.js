@@ -109,12 +109,16 @@ async function renderLive() {
   }
 }
 
-// ---------- Planning (iframe) ----------
-function renderPlanning() {
-  const wrap = document.getElementById("planningWrap");
-  wrap.innerHTML = `<iframe src="${CONFIG.planningUrl}" loading="lazy"
-    referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>`;
+// ---------- Iframes (Planning / Reseaux) ----------
+function renderFrame(wrapId, url) {
+  const wrap = document.getElementById(wrapId);
+  if (wrap.dataset.loaded) return;
+  wrap.dataset.loaded = "1";
+  wrap.innerHTML = `<iframe src="${url}" loading="lazy" referrerpolicy="no-referrer"
+    sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox"></iframe>`;
 }
+function renderPlanning() { renderFrame("planningWrap", CONFIG.planningUrl); }
+function renderReseaux() { renderFrame("reseauxWrap", CONFIG.reseauxUrl); }
 
 // ---------- Videos ----------
 async function renderVideos() {
@@ -185,10 +189,12 @@ function lazyLoad(name) {
   loaded[name] = true;
   if (name === "planning") renderPlanning();
   if (name === "videos") renderVideos();
+  if (name === "reseaux") renderReseaux();
 }
 
 // ---------- Init ----------
 document.getElementById("planningOpen").href = CONFIG.planningUrl;
+document.getElementById("reseauxOpen").href = CONFIG.reseauxUrl;
 
 (function init() {
   renderSocials();

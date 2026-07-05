@@ -23,23 +23,32 @@
     <button class="tab active" data-tab="live">Live / VOD</button>
     <button class="tab" data-tab="planning">Planning</button>
     <button class="tab" data-tab="videos">Vidéos</button>
+    <button class="tab" data-tab="reseaux">Réseaux</button>
   </nav>
 
   <main>
-    <section id="tab-live" class="panel active">
+    <section id="tab-live" class="panel active scroll">
       <div id="liveContent" class="loading">Chargement…</div>
     </section>
 
-    <section id="tab-planning" class="panel">
-      <div class="planning-bar">
+    <section id="tab-planning" class="panel fill">
+      <div class="frame-bar">
         <span>📅 Planning</span>
         <a id="planningOpen" href="#" target="_blank">Ouvrir en grand ↗</a>
       </div>
-      <div id="planningWrap" class="planning-wrap"></div>
+      <div id="planningWrap" class="frame-wrap"></div>
     </section>
 
-    <section id="tab-videos" class="panel">
+    <section id="tab-videos" class="panel scroll">
       <div id="videosContent" class="loading">Chargement…</div>
+    </section>
+
+    <section id="tab-reseaux" class="panel fill">
+      <div class="frame-bar">
+        <span>🔗 Réseaux</span>
+        <a id="reseauxOpen" href="#" target="_blank">Ouvrir en grand ↗</a>
+      </div>
+      <div id="reseauxWrap" class="frame-wrap"></div>
     </section>
   </main>
 

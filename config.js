@@ -12,7 +12,7 @@ export const CONFIG = {
   // Reseaux sociaux affiches sous le live.
   socials: [
     { name: "Twitch",  url: "https://twitch.tv/tvabdou",         icon: "twitch"  },
-    { name: "YouTube", url: "https://www.youtube.com/@dikabdou", icon: "youtube" },
+    { name: "YouTube", url: "https://www.youtube.com/@hdkabdou", icon: "youtube" },
     { name: "Patreon", url: "https://www.patreon.com/c/TVABDOU", icon: "patreon" },
     { name: "Discord", url: "https://discord.gg/Pz7bmEyj6m",     icon: "discord" }
   ],

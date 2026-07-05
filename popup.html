@@ -20,10 +20,18 @@
   </header>
 
   <nav class="tabs">
-    <button class="tab active" data-tab="live">Live / VOD</button>
-    <button class="tab" data-tab="planning">Planning</button>
-    <button class="tab" data-tab="videos">Vidéos</button>
-    <button class="tab" data-tab="reseaux">Réseaux</button>
+    <button class="tab active" data-tab="live" title="Live / VOD" aria-label="Live / VOD">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM6.34 5.34a1 1 0 011.41 1.41 6 6 0 000 8.49 1 1 0 11-1.41 1.41 8 8 0 010-11.31zm11.32 0a8 8 0 010 11.31 1 1 0 11-1.41-1.41 6 6 0 000-8.49 1 1 0 011.41-1.41zM3.51 2.51a1 1 0 011.42 1.42 10 10 0 000 14.14 1 1 0 11-1.42 1.42 12 12 0 010-16.98zm16.98 0a12 12 0 010 16.98 1 1 0 11-1.42-1.42 10 10 0 000-14.14 1 1 0 011.42-1.42z"/></svg>
+    </button>
+    <button class="tab" data-tab="planning" title="Planning" aria-label="Planning">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2a1 1 0 00-1 1v1H5a2 2 0 00-2 2v13a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H8V3a1 1 0 00-1-1zm12 7v10H5V9h14z"/></svg>
+    </button>
+    <button class="tab" data-tab="videos" title="Vidéos" aria-label="Vidéos">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 001.5 7v10A2.5 2.5 0 004 19.5h16a2.5 2.5 0 002.5-2.5V7A2.5 2.5 0 0020 4.5H4zm5.75 3.9l5.5 3.1-5.5 3.1V8.4z"/></svg>
+    </button>
+    <button class="tab" data-tab="patreon" title="Patreon" aria-label="Patreon">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.82 2.41c3.96 0 7.18 3.24 7.18 7.21 0 3.96-3.22 7.18-7.18 7.18-3.97 0-7.21-3.22-7.21-7.18 0-3.97 3.24-7.21 7.21-7.21M2 21.6h3.5V2.41H2V21.6z"/></svg>
+    </button>
   </nav>
 
   <main>
@@ -43,12 +51,12 @@
       <div id="videosContent" class="loading">Chargement…</div>
     </section>
 
-    <section id="tab-reseaux" class="panel fill">
+    <section id="tab-patreon" class="panel scroll">
       <div class="frame-bar">
-        <span>🔗 Réseaux</span>
-        <a id="reseauxOpen" href="#" target="_blank">Ouvrir en grand ↗</a>
+        <span>Patreon — 3 dernières publications</span>
+        <a id="patreonOpen" href="#" target="_blank">Ouvrir ↗</a>
       </div>
-      <div id="reseauxWrap" class="frame-wrap"></div>
+      <div id="patreonContent" class="loading">Chargement…</div>
     </section>
   </main>
 

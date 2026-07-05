@@ -9,9 +9,6 @@ export const CONFIG = {
   // Planning integre en iframe (Vercel + Supabase).
   planningUrl: "https://planning-live.vercel.app/",
 
-  // Page reseaux sociaux integree (4e onglet).
-  reseauxUrl: "https://reseaux-sociaux-eight.vercel.app/index.html",
-
   // Reseaux sociaux affiches sous le live.
   socials: [
     { name: "Twitch",  url: "https://twitch.tv/tvabdou",         icon: "twitch"  },

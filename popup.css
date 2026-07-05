@@ -75,11 +75,12 @@ header {
   border-bottom: 1px solid var(--border);
 }
 .tab {
-  flex: 1; padding: 8px 3px; border-radius: 9px; background: transparent;
-  border: none; color: var(--muted); cursor: pointer;
-  font-weight: 800; font-size: 12px; white-space: nowrap; transition: .15s;
+  flex: 1; padding: 10px 3px; border-radius: 10px; background: transparent;
+  border: none; color: var(--muted); cursor: pointer; transition: .15s;
+  display: flex; align-items: center; justify-content: center;
 }
-.tab:hover { color: var(--ink); background: rgba(143,116,224,.14); }
+.tab svg { width: 21px; height: 21px; display: block; }
+.tab:hover { color: var(--primary-deep); background: rgba(143,116,224,.14); }
 .tab.active {
   color: var(--ink);
   background: linear-gradient(120deg, var(--primary), var(--secondary));
@@ -162,6 +163,11 @@ main {
 }
 .video-item:hover { border-color: var(--primary-deep); box-shadow: 0 6px 16px rgba(120,100,180,.18); }
 .video-item img { width: 116px; aspect-ratio: 16/9; object-fit: cover; flex-shrink: 0; }
+.patreon-thumb {
+  width: 116px; aspect-ratio: 16/9; flex-shrink: 0; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--primary-deep) 0%, var(--secondary-deep) 100%);
+}
+.patreon-thumb svg { width: 30px; height: 30px; }
 .video-meta { padding: 8px 8px 8px 0; display: flex; flex-direction: column; justify-content: center; }
 .video-meta strong { font-size: 12px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .video-meta span { color: var(--muted); font-size: 11px; margin-top: 5px; }

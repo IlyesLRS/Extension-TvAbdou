@@ -1,5 +1,5 @@
 import { CONFIG } from "./config.js";
-import { getStatus, getLatestVideos, isConfigured } from "./lib/api.js";
+import { getStatus, getLatestVideos, getPatreonPosts, isConfigured } from "./lib/api.js";
 
 // ---------- Formatage ----------
 function pad(n) { return String(n).padStart(2, "0"); }
@@ -109,16 +109,45 @@ async function renderLive() {
   }
 }
 
-// ---------- Iframes (Planning / Reseaux) ----------
-function renderFrame(wrapId, url) {
-  const wrap = document.getElementById(wrapId);
+// ---------- Planning (iframe) ----------
+function renderPlanning() {
+  const wrap = document.getElementById("planningWrap");
   if (wrap.dataset.loaded) return;
   wrap.dataset.loaded = "1";
-  wrap.innerHTML = `<iframe src="${url}" loading="lazy" referrerpolicy="no-referrer"
+  wrap.innerHTML = `<iframe src="${CONFIG.planningUrl}" loading="lazy" referrerpolicy="no-referrer"
     sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox"></iframe>`;
 }
-function renderPlanning() { renderFrame("planningWrap", CONFIG.planningUrl); }
-function renderReseaux() { renderFrame("reseauxWrap", CONFIG.reseauxUrl); }
+
+// ---------- Patreon (3 dernieres publications) ----------
+const PATREON_SVG = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M14.82 2.41c3.96 0 7.18 3.24 7.18 7.21 0 3.96-3.22 7.18-7.18 7.18-3.97 0-7.21-3.22-7.21-7.18 0-3.97 3.24-7.21 7.21-7.21M2 21.6h3.5V2.41H2V21.6z"/></svg>';
+async function renderPatreon() {
+  const el = document.getElementById("patreonContent");
+  try {
+    const data = await getPatreonPosts();
+    if (data.configured === false) {
+      el.innerHTML = `<div class="empty">Onglet Patreon à activer :<br>
+        ajoute la variable <b>PATREON_ACCESS_TOKEN</b> sur Vercel<br>(voir server/README.md).</div>`;
+      return;
+    }
+    const posts = data.posts || [];
+    if (!posts.length) {
+      el.innerHTML = `<div class="empty">Aucune publication Patreon.</div>`;
+      return;
+    }
+    el.innerHTML = posts.map((p) => `
+      <a class="video-item" href="${p.url || "#"}" target="_blank">
+        ${p.thumbnail
+          ? `<img src="${p.thumbnail}" alt="">`
+          : `<div class="patreon-thumb">${PATREON_SVG}</div>`}
+        <div class="video-meta">
+          <strong>${escapeHtml(p.title)}</strong>
+          <span>${p.date ? relative(p.date) : ""}${p.isPublic ? "" : " • réservé"}</span>
+        </div>
+      </a>`).join("");
+  } catch (e) {
+    el.innerHTML = `<div class="error">Erreur : ${escapeHtml(e.message)}</div>`;
+  }
+}
 
 // ---------- Videos ----------
 async function renderVideos() {
@@ -189,12 +218,13 @@ function lazyLoad(name) {
   loaded[name] = true;
   if (name === "planning") renderPlanning();
   if (name === "videos") renderVideos();
-  if (name === "reseaux") renderReseaux();
+  if (name === "patreon") renderPatreon();
 }
 
 // ---------- Init ----------
 document.getElementById("planningOpen").href = CONFIG.planningUrl;
-document.getElementById("reseauxOpen").href = CONFIG.reseauxUrl;
+const patreonSocial = CONFIG.socials.find((s) => s.icon === "patreon");
+document.getElementById("patreonOpen").href = patreonSocial ? patreonSocial.url : "#";
 
 (function init() {
   renderSocials();

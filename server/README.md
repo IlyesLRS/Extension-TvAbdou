@@ -6,6 +6,7 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
 ## Endpoints
 - `GET /api/status` → `{ live, stream, vod }` (statut live + dernière VOD si hors ligne)
 - `GET /api/videos?max=3` → `{ videos: [...] }` (dernières vidéos YouTube)
+- `GET /api/patreon` → `{ configured, posts: [...] }` (3 dernières publications Patreon)
 
 ## Déploiement sur Vercel (5 min)
 
@@ -23,6 +24,7 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
    | `TWITCH_LOGIN` | `tvabdou` *(optionnel)* |
    | `YOUTUBE_HANDLE` | `@hdkabdou` *(optionnel)* |
    | `YOUTUBE_CHANNEL_ID` | `UC...` *(optionnel, prioritaire sur le handle)* |
+   | `PATREON_ACCESS_TOKEN` | jeton créateur Patreon *(pour l'onglet Patreon)* |
 6. **Deploy**. Tu obtiens une URL du type `https://tvabdou-proxy.vercel.app`.
 
 ### Option B — via la CLI
@@ -46,3 +48,7 @@ proxyBase: "https://TON-URL.vercel.app"
 - **Twitch** : https://dev.twitch.tv/console/apps/create (Client ID + générer un Secret)
 - **YouTube** : active « YouTube Data API v3 » puis crée une clé sur
   https://console.cloud.google.com/apis/credentials
+- **Patreon** : va sur https://www.patreon.com/portal/registration/register-clients,
+  connecté avec le compte créateur, crée un client → copie le
+  **« Creator's Access Token »**. C'est la valeur de `PATREON_ACCESS_TOKEN`.
+  *(L'onglet Patreon reste masqué/affiche un message tant que ce jeton n'est pas ajouté.)*

@@ -1,27 +1,17 @@
 {
   "manifest_version": 3,
   "name": "TVABDOU - Live Tracker",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsJiEFhmkj9jUh05ATaqYmy8QfUD1nUZ9sCCDvMFaEgYAB++/trYzqgPCPt4I83qy4r+O+xi2EEwJjSFW2Aj5uoS6D+ltzvCD9Ngu04D5KdV2/nF35Ft+wa1kmGM56n10zrPHMfc96adlwxiSAfpiABY2+NapZD/STlEo6w24NbAE1JwfC69KoGJSowAqWzvsOh8oygttDyohVALRCZC/z4e+2tEK1Lfn3vOBafI/tMVRlX48M8nifrmaRwdxKIrJwdy9dDUK0vyPfUbyK6UosXlf4f6OCyZoguPc0IXzyjtRXsvqwdx3Yb9VElLZfowiOq5g8tpbvxEI3I9SZQzt1QIDAQAB",
   "description": "Savoir si TVABDOU est en live, voir la derniere VOD, le planning, les dernieres videos et recevoir des notifications.",
   "permissions": [
     "storage",
     "notifications",
-    "alarms",
-    "declarativeNetRequest"
+    "alarms"
   ],
   "host_permissions": [
     "https://*.vercel.app/*"
   ],
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "ruleset_1",
-        "enabled": true,
-        "path": "rules.json"
-      }
-    ]
-  },
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -43,6 +33,6 @@
     "128": "icons/icon-128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; frame-src https://planning-live.vercel.app https://reseaux-sociaux-eight.vercel.app https://*.vercel.app;"
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-src https://planning-live.vercel.app https://*.vercel.app;"
   }
 }

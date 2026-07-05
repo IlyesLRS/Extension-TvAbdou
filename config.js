@@ -1,9 +1,8 @@
 // Configuration de l'extension.
 // Aucune cle API ici : tout passe par le proxy Vercel (dossier /server).
 export const CONFIG = {
-  // >>> A REMPLIR apres avoir deploye le dossier /server sur Vercel <<<
-  // Exemple : "https://tvabdou-proxy.vercel.app"
-  proxyBase: "https://REMPLACE-MOI.vercel.app",
+  // Proxy Vercel (garde les cles API cote serveur).
+  proxyBase: "https://extension-tvabdou.vercel.app",
 
   twitchLogin: "tvabdou",
 

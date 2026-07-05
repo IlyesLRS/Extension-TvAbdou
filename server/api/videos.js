@@ -1,16 +1,36 @@
 // GET /api/videos?max=3  -> dernieres videos YouTube
 const KEY = process.env.YOUTUBE_API_KEY;
 const HANDLE = (process.env.YOUTUBE_HANDLE || "@dikabdou").replace(/^@/, "");
+const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || ""; // override fiable (UC...)
 
 let uploadsCache = null;
 async function uploadsPlaylistId() {
   if (uploadsCache) return uploadsCache;
-  const url =
+
+  // 1) Si un ID de chaine (UC...) est fourni, la playlist "uploads" s'en deduit directement.
+  if (CHANNEL_ID) {
+    const r = await fetch(
+      "https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=" +
+        encodeURIComponent(CHANNEL_ID) +
+        "&key=" +
+        KEY
+    );
+    if (!r.ok) throw new Error("YouTube channels " + r.status);
+    const j = await r.json();
+    const item = j.items && j.items[0];
+    uploadsCache =
+      item && item.contentDetails && item.contentDetails.relatedPlaylists.uploads;
+    if (!uploadsCache) throw new Error("Chaine YouTube introuvable (id): " + CHANNEL_ID);
+    return uploadsCache;
+  }
+
+  // 2) Sinon on tente via le handle (@...).
+  const r = await fetch(
     "https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=@" +
-    encodeURIComponent(HANDLE) +
-    "&key=" +
-    KEY;
-  const r = await fetch(url);
+      encodeURIComponent(HANDLE) +
+      "&key=" +
+      KEY
+  );
   if (!r.ok) throw new Error("YouTube channels " + r.status);
   const j = await r.json();
   const item = j.items && j.items[0];

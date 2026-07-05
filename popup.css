@@ -56,6 +56,19 @@ header {
 }
 @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
 
+.head-actions { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+  display: grid; place-items: center;
+  width: 34px; height: 34px; border: none; border-radius: 50%;
+  background: rgba(255,255,255,.9); color: var(--primary-deep);
+  cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.1); transition: .15s;
+}
+.icon-btn:hover { background: #fff; }
+.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn.spin svg { animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .icon-btn.spin svg { animation: none; } }
+
 .notif-btn {
   display: flex; align-items: center; gap: 5px;
   background: rgba(255,255,255,.9); color: var(--ink);

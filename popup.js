@@ -54,11 +54,11 @@ const SOCIAL_SVG = {
 };
 
 // ---------- Live / VOD ----------
-async function renderLive() {
+async function renderLive(bust) {
   const el = document.getElementById("liveContent");
   const pill = document.getElementById("statusPill");
   try {
-    const d = await getStatus();
+    const d = await getStatus(bust);
     if (d.live && d.stream) {
       const s = d.stream;
       pill.innerHTML = '<span class="dot"></span>EN LIVE';
@@ -120,10 +120,10 @@ function renderPlanning() {
 
 // ---------- Patreon (3 dernieres publications) ----------
 const PATREON_SVG = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M14.82 2.41c3.96 0 7.18 3.24 7.18 7.21 0 3.96-3.22 7.18-7.18 7.18-3.97 0-7.21-3.22-7.21-7.18 0-3.97 3.24-7.21 7.21-7.21M2 21.6h3.5V2.41H2V21.6z"/></svg>';
-async function renderPatreon() {
+async function renderPatreon(bust) {
   const el = document.getElementById("patreonContent");
   try {
-    const data = await getPatreonPosts();
+    const data = await getPatreonPosts(bust);
     if (data.configured === false) {
       el.innerHTML = `<div class="empty">Onglet Patreon à activer :<br>
         ajoute la variable <b>PATREON_ACCESS_TOKEN</b> sur Vercel<br>(voir server/README.md).</div>`;
@@ -150,10 +150,10 @@ async function renderPatreon() {
 }
 
 // ---------- Videos ----------
-async function renderVideos() {
+async function renderVideos(bust) {
   const el = document.getElementById("videosContent");
   try {
-    const vids = await getLatestVideos(3);
+    const vids = await getLatestVideos(3, bust);
     if (!vids.length) {
       el.innerHTML = `<div class="empty">Aucune vidéo trouvée.</div>`;
       return;
@@ -226,10 +226,37 @@ document.getElementById("planningOpen").href = CONFIG.planningUrl;
 const patreonSocial = CONFIG.socials.find((s) => s.icon === "patreon");
 document.getElementById("patreonOpen").href = patreonSocial ? patreonSocial.url : "#";
 
+// ---------- Bouton Actualiser (force le rechargement, sans cache) ----------
+function initRefresh() {
+  const btn = document.getElementById("refreshBtn");
+  let busy = false;
+  btn.addEventListener("click", async () => {
+    if (busy || !isConfigured()) return;
+    busy = true;
+    btn.classList.add("spin");
+    const activeTab = document.querySelector(".tab.active");
+    const active = activeTab ? activeTab.dataset.tab : "live";
+    try {
+      await renderLive(true); // met a jour la pastille de statut + l'onglet Live
+      if (active === "videos") await renderVideos(true);
+      else if (active === "patreon") await renderPatreon(true);
+      else if (active === "planning") {
+        const w = document.getElementById("planningWrap");
+        w.dataset.loaded = ""; w.innerHTML = "";
+        renderPlanning();
+      }
+      chrome.runtime.sendMessage({ type: "poll-now" }).catch(() => {});
+    } finally {
+      setTimeout(() => { btn.classList.remove("spin"); busy = false; }, 500);
+    }
+  });
+}
+
 (function init() {
   renderSocials();
   initTabs();
   initNotifToggle();
+  initRefresh();
 
   if (!isConfigured()) {
     document.getElementById("liveContent").innerHTML =

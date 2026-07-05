@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo">TV</span>
+      <div class="brand-txt">
+        <strong>TVABDOU</strong>
+        <span id="statusPill" class="pill off">HORS LIGNE</span>
+      </div>
+    </div>
+    <button id="notifToggle" class="notif-btn" title="Activer / couper les notifications">
+      <span class="notif-icon">🔔</span>
+      <span id="notifState">ON</span>
+    </button>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="live">Live / VOD</button>
+    <button class="tab" data-tab="planning">Planning</button>
+    <button class="tab" data-tab="videos">Vidéos</button>
+  </nav>
+
+  <main>
+    <!-- ONGLET LIVE / VOD -->
+    <section id="tab-live" class="panel active">
+      <div id="liveContent" class="loading">Chargement…</div>
+      <div class="socials" id="socials"></div>
+    </section>
+
+    <!-- ONGLET PLANNING -->
+    <section id="tab-planning" class="panel">
+      <div id="planningContent" class="loading">Chargement…</div>
+    </section>
+
+    <!-- ONGLET VIDEOS -->
+    <section id="tab-videos" class="panel">
+      <div id="videosContent" class="loading">Chargement…</div>
+    </section>
+  </main>
+
+  <footer>
+    <a href="#" id="openOptions">⚙️ Options / Clés API</a>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

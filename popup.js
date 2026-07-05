@@ -1,16 +1,9 @@
 import { CONFIG } from "./config.js";
-import {
-  getStreamStatus,
-  getLastVod,
-  getSchedule,
-  getLatestVideos,
-  isConfigured
-} from "./lib/api.js";
+import { getStatus, getLatestVideos, isConfigured } from "./lib/api.js";
 
-// ---------- Helpers de formatage ----------
+// ---------- Formatage ----------
 function pad(n) { return String(n).padStart(2, "0"); }
 
-// Duree ecoulee depuis une date ISO -> "2h27min"
 function uptime(iso) {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
   const h = Math.floor(diff / 3600000);
@@ -18,7 +11,6 @@ function uptime(iso) {
   return h > 0 ? `${h}h${pad(m)}` : `${m}min`;
 }
 
-// Duree Twitch "3h25m40s" -> "3h25min"
 function fmtVodDuration(d) {
   if (!d) return "";
   const h = /(\d+)h/.exec(d);
@@ -29,7 +21,6 @@ function fmtVodDuration(d) {
   return d;
 }
 
-// Date relative -> "il y a 2 jours"
 function relative(iso) {
   const diff = Date.now() - new Date(iso).getTime();
   const day = 86400000;
@@ -48,45 +39,50 @@ function fmtNumber(n) {
   return String(n);
 }
 
-const MONTHS = ["JAN","FÉV","MAR","AVR","MAI","JUIN","JUIL","AOÛT","SEP","OCT","NOV","DÉC"];
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+  );
+}
 
-// ---------- Icones reseaux (SVG inline) ----------
+// ---------- Icones reseaux ----------
 const SOCIAL_SVG = {
   twitch: '<svg viewBox="0 0 24 24" fill="#9146ff"><path d="M2.149 0L.537 4.119v16.836h5.731V24h3.224l3.045-3.045h4.657L23.463 15V0H2.149zm19.164 14.045l-3.582 3.582h-5.731l-3.045 3.045v-3.045H4.687V1.79h16.626v12.255zm-3.582-7.373v5.731h-2.149V6.672h2.149zm-5.731 0v5.731H9.851V6.672h2.149z"/></svg>',
   youtube: '<svg viewBox="0 0 24 24" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>',
-  patreon: '<svg viewBox="0 0 24 24" fill="#ff424d"><path d="M14.82 2.41c3.96 0 7.18 3.24 7.18 7.21 0 3.96-3.22 7.18-7.18 7.18-3.97 0-7.21-3.22-7.21-7.18 0-3.97 3.24-7.21 7.21-7.21M2 21.6h3.5V2.41H2V21.6z"/></svg>',
+  patreon: '<svg viewBox="0 0 24 24" fill="#111"><path d="M14.82 2.41c3.96 0 7.18 3.24 7.18 7.21 0 3.96-3.22 7.18-7.18 7.18-3.97 0-7.21-3.22-7.21-7.18 0-3.97 3.24-7.21 7.21-7.21M2 21.6h3.5V2.41H2V21.6z"/></svg>',
   discord: '<svg viewBox="0 0 24 24" fill="#5865f2"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.369a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.056c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>'
 };
 
-// ---------- Rendu : Live / VOD ----------
+// ---------- Live / VOD ----------
 async function renderLive() {
   const el = document.getElementById("liveContent");
   const pill = document.getElementById("statusPill");
   try {
-    const status = await getStreamStatus();
-    if (status.live) {
-      pill.textContent = "EN LIVE";
+    const d = await getStatus();
+    if (d.live && d.stream) {
+      const s = d.stream;
+      pill.innerHTML = '<span class="dot"></span>EN LIVE';
       pill.className = "pill live";
       el.innerHTML = `
         <div class="stream-card">
-          <a class="thumb-wrap" href="https://twitch.tv/${status.login}" target="_blank">
-            ${status.thumbnail ? `<img src="${status.thumbnail}?_=${Date.now()}" alt="">` : ""}
-            <span class="badge-live">● LIVE</span>
-            <span class="badge-time">⏱ ${uptime(status.startedAt)}</span>
+          <a class="thumb-wrap" href="https://twitch.tv/${CONFIG.twitchLogin}" target="_blank">
+            ${s.thumbnail ? `<img src="${s.thumbnail}?_=${Date.now()}" alt="">` : ""}
+            <span class="badge-live"><span class="dot"></span>LIVE</span>
+            <span class="badge-time">⏱ ${uptime(s.startedAt)}</span>
           </a>
           <div class="card-body">
-            <div class="card-title">${escapeHtml(status.title || "")}</div>
+            <div class="card-title">${escapeHtml(s.title || "")}</div>
             <div class="meta-row">
-              <span>👁 <b>${fmtNumber(status.viewers)}</b> viewers</span>
-              ${status.game ? `<span>🎮 ${escapeHtml(status.game)}</span>` : ""}
+              <span class="chip mint">👁 <b>${fmtNumber(s.viewers)}</b> viewers</span>
+              ${s.game ? `<span class="chip">🎮 ${escapeHtml(s.game)}</span>` : ""}
             </div>
-            <a class="watch-btn" href="https://twitch.tv/${status.login}" target="_blank">Regarder le live</a>
+            <a class="watch-btn" href="https://twitch.tv/${CONFIG.twitchLogin}" target="_blank">Regarder le live</a>
           </div>
         </div>`;
     } else {
       pill.textContent = "HORS LIGNE";
       pill.className = "pill off";
-      const vod = await getLastVod();
+      const vod = d.vod;
       if (!vod) {
         el.innerHTML = `<div class="empty">Aucune VOD disponible.</div>`;
       } else {
@@ -100,8 +96,8 @@ async function renderLive() {
             <div class="card-body">
               <div class="card-title">${escapeHtml(vod.title)}</div>
               <div class="meta-row">
-                <span>📅 <b>${relative(vod.date)}</b></span>
-                <span>👁 <b>${fmtNumber(vod.views)}</b> vues</span>
+                <span class="chip">📅 <b>${relative(vod.date)}</b></span>
+                <span class="chip">👁 <b>${fmtNumber(vod.views)}</b> vues</span>
               </div>
               <a class="watch-btn" href="${vod.url}" target="_blank">Voir la VOD</a>
             </div>
@@ -113,43 +109,20 @@ async function renderLive() {
   }
 }
 
-// ---------- Rendu : Planning ----------
-async function renderPlanning() {
-  const el = document.getElementById("planningContent");
-  try {
-    const segs = await getSchedule();
-    if (!segs.length) {
-      el.innerHTML = `<div class="empty">Aucun planning configuré sur Twitch pour le moment.</div>`;
-      return;
-    }
-    el.innerHTML = segs.map((s) => {
-      const d = new Date(s.start);
-      const time = pad(d.getHours()) + "h" + pad(d.getMinutes());
-      const weekday = d.toLocaleDateString("fr-FR", { weekday: "long" });
-      return `
-        <div class="sched-item ${s.canceled ? "sched-canceled" : ""}">
-          <div class="sched-date">
-            <div class="d">${d.getDate()}</div>
-            <div class="m">${MONTHS[d.getMonth()]}</div>
-          </div>
-          <div class="sched-info">
-            <strong>${escapeHtml(s.title)}</strong>
-            <span>${weekday} • ${time}${s.category ? " • " + escapeHtml(s.category) : ""}${s.canceled ? " • ANNULÉ" : ""}</span>
-          </div>
-        </div>`;
-    }).join("");
-  } catch (e) {
-    el.innerHTML = `<div class="error">Erreur : ${escapeHtml(e.message)}</div>`;
-  }
+// ---------- Planning (iframe) ----------
+function renderPlanning() {
+  const wrap = document.getElementById("planningWrap");
+  wrap.innerHTML = `<iframe src="${CONFIG.planningUrl}" loading="lazy"
+    referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>`;
 }
 
-// ---------- Rendu : Videos ----------
+// ---------- Videos ----------
 async function renderVideos() {
   const el = document.getElementById("videosContent");
   try {
     const vids = await getLatestVideos(3);
     if (!vids.length) {
-      el.innerHTML = `<div class="empty">Aucune vidéo trouvée.<br>Vérifie la clé YouTube dans les Options.</div>`;
+      el.innerHTML = `<div class="empty">Aucune vidéo trouvée.</div>`;
       return;
     }
     el.innerHTML = vids.map((v) => `
@@ -165,7 +138,7 @@ async function renderVideos() {
   }
 }
 
-// ---------- Reseaux sociaux ----------
+// ---------- Reseaux ----------
 function renderSocials() {
   const el = document.getElementById("socials");
   el.innerHTML = CONFIG.socials.map((s) => `
@@ -176,7 +149,7 @@ function renderSocials() {
 }
 
 // ---------- Notifications toggle ----------
-async function initNotifToggle() {
+function initNotifToggle() {
   const btn = document.getElementById("notifToggle");
   const state = document.getElementById("notifState");
   async function refresh() {
@@ -208,7 +181,6 @@ function initTabs() {
     });
   });
 }
-
 function lazyLoad(name) {
   if (loaded[name]) return;
   loaded[name] = true;
@@ -216,37 +188,22 @@ function lazyLoad(name) {
   if (name === "videos") renderVideos();
 }
 
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
-  );
-}
-
 // ---------- Init ----------
-document.getElementById("openOptions").addEventListener("click", (e) => {
-  e.preventDefault();
-  chrome.runtime.openOptionsPage();
-});
+document.getElementById("planningOpen").href = CONFIG.planningUrl;
 
-(async function init() {
+(function init() {
   renderSocials();
   initTabs();
   initNotifToggle();
 
-  if (!(await isConfigured())) {
+  if (!isConfigured()) {
     document.getElementById("liveContent").innerHTML =
-      `<div class="empty">⚙️ Configuration requise.<br>
-       Ajoute tes clés API Twitch (et YouTube) dans les
-       <a href="#" id="cfgLink">Options</a>.</div>`;
-    document.getElementById("cfgLink").addEventListener("click", (e) => {
-      e.preventDefault();
-      chrome.runtime.openOptionsPage();
-    });
+      `<div class="empty">⚙️ Le proxy n'est pas encore configuré.<br>
+       Renseigne <b>proxyBase</b> dans <code>config.js</code> après avoir déployé le dossier <b>/server</b>.</div>`;
     return;
   }
 
   loaded.live = true;
   renderLive();
-  // demande au background de rafraichir le badge tout de suite
   chrome.runtime.sendMessage({ type: "poll-now" }).catch(() => {});
 })();

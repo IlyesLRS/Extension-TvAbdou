@@ -1,0 +1,7 @@
+{
+  "name": "tvabdou-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Proxy serverless (Vercel) pour l'extension TVABDOU : garde les cles Twitch/YouTube cote serveur."
+}

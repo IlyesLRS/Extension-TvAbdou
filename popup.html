@@ -7,7 +7,7 @@
 <body>
   <header>
     <div class="brand">
-      <span class="logo">TV</span>
+      <img class="avatar" src="icons/avatar.png" alt="TVABDOU" />
       <div class="brand-txt">
         <strong>TVABDOU</strong>
         <span id="statusPill" class="pill off">HORS LIGNE</span>
@@ -26,25 +26,26 @@
   </nav>
 
   <main>
-    <!-- ONGLET LIVE / VOD -->
     <section id="tab-live" class="panel active">
       <div id="liveContent" class="loading">Chargement…</div>
       <div class="socials" id="socials"></div>
     </section>
 
-    <!-- ONGLET PLANNING -->
     <section id="tab-planning" class="panel">
-      <div id="planningContent" class="loading">Chargement…</div>
+      <div class="planning-bar">
+        <span>📅 Planning</span>
+        <a id="planningOpen" href="#" target="_blank">Ouvrir en grand ↗</a>
+      </div>
+      <div id="planningWrap" class="planning-wrap"></div>
     </section>
 
-    <!-- ONGLET VIDEOS -->
     <section id="tab-videos" class="panel">
       <div id="videosContent" class="loading">Chargement…</div>
     </section>
   </main>
 
   <footer>
-    <a href="#" id="openOptions">⚙️ Options / Clés API</a>
+    <a href="https://twitch.tv/tvabdou" target="_blank">twitch.tv/tvabdou</a>
   </footer>
 
   <script type="module" src="popup.js"></script>

@@ -1,50 +1,49 @@
 # TVABDOU — Live Tracker (extension navigateur)
 
 Extension Chrome / Edge (Manifest V3) qui affiche si **TVABDOU** est en live, la
-dernière VOD, le planning, les 3 dernières vidéos YouTube, et envoie des
-notifications (live Twitch + nouvelle vidéo YouTube).
+dernière VOD, le planning et les dernières vidéos YouTube, avec notifications.
+
+> **Aucune clé API dans l'extension.** Les clés Twitch/YouTube vivent dans un petit
+> proxy Vercel (dossier [`server/`](server/)). L'utilisateur n'a **rien à configurer** :
+> il installe et ça marche.
 
 ## Fonctionnalités
-- 🟣 **Badge sur l'icône** : `LIVE` (rouge) quand il stream, `OFF` (gris) sinon.
-- **Onglet Live / VOD** : titre, nombre de viewers et durée du stream en direct ;
-  sinon la dernière VOD avec sa date, sa durée et son nombre de vues.
-- **Réseaux sociaux** : Twitch, YouTube, Patreon, Discord (sous le live).
-- **Onglet Planning** : intégration du planning Twitch.
+- 🟣 **Badge sur l'icône** : `LIVE` quand il stream, `OFF` sinon (l'icône est son avatar).
+- **Onglet Live / VOD** : titre, viewers et durée du stream en direct ; sinon la
+  dernière VOD (date, durée, vues).
+- **Réseaux** : Twitch, YouTube, Patreon, Discord.
+- **Onglet Planning** : intégration en direct de https://planning-live.vercel.app/
 - **Onglet Vidéos** : les 3 dernières vidéos YouTube.
-- **Notifications** : quand il passe en live et quand une vidéo YouTube sort.
-- 🔔 **Bouton pour couper/activer les notifications** (en haut à droite du popup).
+- **Notifications** : passage en live + nouvelle vidéo YouTube.
+- 🔔 **Bouton pour couper/activer les notifications**.
 
-## Installation (mode développeur)
-1. Ouvre `chrome://extensions` (ou `edge://extensions`).
-2. Active **Mode développeur** (en haut à droite).
-3. Clique **Charger l'extension non empaquetée** et sélectionne ce dossier
-   `extension-tvAbdou`.
-4. L'icône TVABDOU apparaît dans la barre d'outils.
+## Direction artistique
+Lavande `#C9BCF1` (principal) · Menthe `#B9E2CE` (secondaire) · Noir & blanc.
 
-## Configuration des clés API (indispensable)
-Clique sur l'icône puis « ⚙️ Options », ou fais clic droit sur l'icône → Options.
+## Mise en place (2 étapes)
 
-### Twitch (obligatoire)
-1. Va sur https://dev.twitch.tv/console/apps/create
-2. Crée une application (URL de redirection : `http://localhost`).
-3. Copie le **Client ID** et génère un **Client Secret**.
-4. Colle-les dans la page Options.
+### 1) Déployer le proxy (une seule fois)
+Suis [`server/README.md`](server/README.md) : import du dossier `server/` sur Vercel
++ 3 variables d'environnement (`TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`,
+`YOUTUBE_API_KEY`). Tu obtiens une URL type `https://tvabdou-proxy.vercel.app`.
 
-### YouTube (pour l'onglet Vidéos et les notifs YouTube)
-1. Active « YouTube Data API v3 » sur https://console.cloud.google.com/apis/library/youtube.googleapis.com
-2. Crée une **clé API** dans « Identifiants ».
-3. Colle-la dans la page Options.
+### 2) Brancher l'extension sur le proxy
+Dans [`config.js`](config.js), remplace :
+```js
+proxyBase: "https://REMPLACE-MOI.vercel.app"
+```
+par l'URL de ton proxy.
+
+### Installer l'extension
+1. `chrome://extensions` → active **Mode développeur**.
+2. **Charger l'extension non empaquetée** → sélectionne ce dossier.
 
 ## Personnalisation
-Tout est dans `config.js` :
-- `twitchLogin` : le login Twitch (`tvabdou`).
-- `youtubeHandle` : le handle YouTube (`@dikabdou`).
-- `socials` : les liens réseaux affichés.
-- `pollMinutes` : fréquence de vérification (défaut 1 min).
+Tout est dans [`config.js`](config.js) : `twitchLogin`, `planningUrl`, `socials`,
+`pollMinutes`. Les identifiants de chaîne (login Twitch, handle YouTube) côté données
+se règlent via les variables d'environnement du proxy.
 
-## Notes
-- Les clés sont stockées **localement** (`chrome.storage.local`), rien n'est
-  envoyé ailleurs que vers les API officielles Twitch/YouTube.
-- Le planning apparaît uniquement si TVABDOU a configuré un planning sur Twitch.
-- Attention au quota YouTube Data API (10 000 unités/jour par défaut, largement
-  suffisant ici).
+## Sécurité
+Les clés API ne sont **jamais** dans l'extension ni sur GitHub : elles restent dans
+les variables d'environnement Vercel, côté serveur. Le proxy n'expose que des données
+publiques (statut live, VOD, vidéos).

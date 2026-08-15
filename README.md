@@ -98,7 +98,7 @@ Voir [`server/README.md`](server/README.md) pour le détail. En résumé :
    | `TWITCH_CLIENT_ID` | Twitch (live + VOD) |
    | `TWITCH_CLIENT_SECRET` | Twitch |
    | `YOUTUBE_API_KEY` | YouTube (onglet Vidéos + notifs) |
-   | `PATREON_ACCESS_TOKEN` | Patreon (onglet Patreon) |
+   | `PATREON_ACCESS_TOKEN` + `PATREON_CLIENT_ID` / `_SECRET` / `PATREON_REFRESH_TOKEN` | Patreon (onglet Patreon, avec renouvellement automatique du jeton) |
 
 3. Déploie, puis renseigne l'URL du proxy dans [`config.js`](config.js) (`proxyBase`).
 

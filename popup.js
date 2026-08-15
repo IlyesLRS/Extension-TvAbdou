@@ -179,10 +179,10 @@ async function renderPatreon(bust) {
     if (data.configured === false) {
       el.innerHTML =
         data.reason === "auth"
-          ? `<div class="empty">🔑 Le jeton Patreon a expiré.<br>
-             Régénère le <b>Creator's Access Token</b> sur Patreon,<br>
-             puis mets à jour <b>PATREON_ACCESS_TOKEN</b> sur Vercel<br>
-             (voir server/README.md).</div>`
+          ? `<div class="empty">🔑 Authentification Patreon expirée.<br>
+             Le renouvellement automatique n'a pas pu aboutir :<br>
+             vérifie <b>PATREON_REFRESH_TOKEN</b>, <b>PATREON_CLIENT_ID</b><br>
+             et <b>PATREON_CLIENT_SECRET</b> sur Vercel<br>(voir server/README.md).</div>`
           : `<div class="empty">Onglet Patreon à activer :<br>
              ajoute la variable <b>PATREON_ACCESS_TOKEN</b> sur Vercel<br>(voir server/README.md).</div>`;
       return;

@@ -1,20 +1,11 @@
 // GET /api/patreon -> 3 dernieres publications Patreon du createur.
-// Necessite la variable d'env PATREON_ACCESS_TOKEN (Creator's Access Token).
-const TOKEN = process.env.PATREON_ACCESS_TOKEN;
+// Authentification et renouvellement du jeton : ../lib/patreon.js
+import { patreonGet as pget, isConfigured } from "../lib/patreon.js";
+
 const API = "https://www.patreon.com/api/oauth2/v2";
 const FIELDS = "fields%5Bpost%5D=title,url,published_at,embed_url,is_public";
 
 let campaignCache = null;
-
-async function pget(url) {
-  const r = await fetch(url, { headers: { Authorization: "Bearer " + TOKEN } });
-  if (!r.ok) {
-    const err = new Error("Patreon API " + r.status);
-    err.status = r.status;
-    throw err;
-  }
-  return r.json();
-}
 
 async function getCampaignId() {
   if (campaignCache) return campaignCache;
@@ -59,7 +50,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=300");
 
-  if (!TOKEN) {
+  if (!isConfigured()) {
     return res.status(200).json({ configured: false, posts: [] });
   }
   try {

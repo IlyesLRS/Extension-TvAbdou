@@ -17,9 +17,9 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
   Si le jeton est absent, expiré ou révoqué : `{ configured: false, reason: "auth" }`
   (jamais d'erreur brute — l'onglet affiche la marche à suivre).
 
-> ⚠️ **Le `PATREON_ACCESS_TOKEN` expire** (~1 mois). Quand l'onglet Patreon affiche
-> « le jeton a expiré », régénère-le (voir *Où trouver les clés* plus bas) et mets à
-> jour la variable sur Vercel, puis redéploie.
+> ⚠️ **Les jetons Patreon expirent** (~1 mois). Renseigne `PATREON_CLIENT_ID`,
+> `PATREON_CLIENT_SECRET` et `PATREON_REFRESH_TOKEN` : le proxy renouvelle alors
+> l'accès tout seul, sans intervention. Voir *Où trouver les clés* plus bas.
 
 ## Déploiement sur Vercel (5 min)
 
@@ -39,7 +39,10 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
    | `YOUTUBE_CHANNEL_ID` | `UC...` — chaîne 1 *(optionnel, prioritaire sur le handle)* |
    | `YOUTUBE_HANDLE_2` | `@abdou_mp4` — chaîne 2 *(optionnel)* |
    | `YOUTUBE_CHANNEL_ID_2` | `UC...` — chaîne 2 *(optionnel, prioritaire sur le handle)* |
-   | `PATREON_ACCESS_TOKEN` | jeton créateur Patreon *(pour l'onglet Patreon)* |
+   | `PATREON_ACCESS_TOKEN` | Creator's Access Token *(facultatif si les 3 lignes suivantes sont remplies)* |
+   | `PATREON_CLIENT_ID` | Client ID Patreon *(renouvellement auto)* |
+   | `PATREON_CLIENT_SECRET` | Client Secret Patreon *(renouvellement auto)* |
+   | `PATREON_REFRESH_TOKEN` | Creator's Refresh Token *(renouvellement auto)* |
 6. **Deploy**. Tu obtiens une URL du type `https://tvabdou-proxy.vercel.app`.
 
 ### Option B — via la CLI
@@ -64,6 +67,17 @@ proxyBase: "https://TON-URL.vercel.app"
 - **YouTube** : active « YouTube Data API v3 » puis crée une clé sur
   https://console.cloud.google.com/apis/credentials
 - **Patreon** : va sur https://www.patreon.com/portal/registration/register-clients,
-  connecté avec le compte créateur, crée un client → copie le
-  **« Creator's Access Token »**. C'est la valeur de `PATREON_ACCESS_TOKEN`.
-  *(L'onglet Patreon reste masqué/affiche un message tant que ce jeton n'est pas ajouté.)*
+  connecté avec le **compte créateur**, crée (ou ouvre) un client. La fiche du client
+  affiche quatre valeurs à recopier sur Vercel :
+
+  | Sur la page Patreon | Variable Vercel |
+  |---------------------|-----------------|
+  | Client ID | `PATREON_CLIENT_ID` |
+  | Client Secret | `PATREON_CLIENT_SECRET` |
+  | Creator's Access Token | `PATREON_ACCESS_TOKEN` |
+  | Creator's Refresh Token | `PATREON_REFRESH_TOKEN` |
+
+  Avec les quatre, le proxy renouvelle l'accès automatiquement quand le jeton expire
+  (il rejoue la requête après un `401`). Avec le seul `PATREON_ACCESS_TOKEN`, l'onglet
+  cesse de fonctionner à l'expiration et il faut recopier le jeton à la main.
+  *(Sans aucun jeton, l'onglet Patreon affiche simplement un message d'explication.)*

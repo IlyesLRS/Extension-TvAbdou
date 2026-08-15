@@ -8,7 +8,11 @@ let campaignCache = null;
 
 async function pget(url) {
   const r = await fetch(url, { headers: { Authorization: "Bearer " + TOKEN } });
-  if (!r.ok) throw new Error("Patreon API " + r.status);
+  if (!r.ok) {
+    const err = new Error("Patreon API " + r.status);
+    err.status = r.status;
+    throw err;
+  }
   return r.json();
 }
 
@@ -78,6 +82,12 @@ export default async function handler(req, res) {
     });
     return res.status(200).json({ configured: true, posts });
   } catch (e) {
+    // 401 = jeton expire ou revoque, 403 = scopes insuffisants.
+    // On ne renvoie pas d'erreur brute : l'onglet affiche un message explicite.
+    if (e.status === 401 || e.status === 403) {
+      campaignCache = null; // evite de garder une campagne resolue avec un jeton mort
+      return res.status(200).json({ configured: false, reason: "auth", posts: [] });
+    }
     return res.status(500).json({ error: e.message });
   }
 }

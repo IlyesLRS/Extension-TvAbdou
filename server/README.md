@@ -13,7 +13,13 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
   `all` = les deux fusionnées par date). Sans `ch`, c'est `main`.
 - `GET /api/channels` → `{ channels: [{ key, handle, title, avatar, url }] }` —
   nom et photo de profil des deux chaînes YouTube (utilisé par la barre de réseaux).
-- `GET /api/patreon` → `{ configured, posts: [...] }` (3 dernières publications Patreon)
+- `GET /api/patreon` → `{ configured, posts: [...] }` (3 dernières publications Patreon).
+  Si le jeton est absent, expiré ou révoqué : `{ configured: false, reason: "auth" }`
+  (jamais d'erreur brute — l'onglet affiche la marche à suivre).
+
+> ⚠️ **Le `PATREON_ACCESS_TOKEN` expire** (~1 mois). Quand l'onglet Patreon affiche
+> « le jeton a expiré », régénère-le (voir *Où trouver les clés* plus bas) et mets à
+> jour la variable sur Vercel, puis redéploie.
 
 ## Déploiement sur Vercel (5 min)
 

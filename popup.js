@@ -177,8 +177,14 @@ async function renderPatreon(bust) {
   try {
     const data = await getPatreonPosts(bust);
     if (data.configured === false) {
-      el.innerHTML = `<div class="empty">Onglet Patreon à activer :<br>
-        ajoute la variable <b>PATREON_ACCESS_TOKEN</b> sur Vercel<br>(voir server/README.md).</div>`;
+      el.innerHTML =
+        data.reason === "auth"
+          ? `<div class="empty">🔑 Le jeton Patreon a expiré.<br>
+             Régénère le <b>Creator's Access Token</b> sur Patreon,<br>
+             puis mets à jour <b>PATREON_ACCESS_TOKEN</b> sur Vercel<br>
+             (voir server/README.md).</div>`
+          : `<div class="empty">Onglet Patreon à activer :<br>
+             ajoute la variable <b>PATREON_ACCESS_TOKEN</b> sur Vercel<br>(voir server/README.md).</div>`;
       return;
     }
     const posts = data.posts || [];

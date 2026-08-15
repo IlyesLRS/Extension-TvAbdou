@@ -23,7 +23,7 @@ export const CONFIG = {
     { name: "YouTube — HDKABDOU",  url: "https://www.youtube.com/@hdkabdou",  icon: "youtube", ytKey: "main"   },
     { name: "YouTube — ABDOU MP4", url: "https://www.youtube.com/@abdou_mp4", icon: "youtube", ytKey: "second" },
     { name: "Patreon", url: "https://www.patreon.com/c/TVABDOU",  icon: "patreon" },
-    { name: "Discord", url: "https://discord.gg/Pz7bmEyj6m",      icon: "discord" }
+    { name: "Discord", url: "https://discord.com/invite/SuN3YSHjAC", icon: "discord" }
   ],
 
   // Frequence de verification du live / des videos (minutes).

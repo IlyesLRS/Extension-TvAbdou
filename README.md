@@ -4,8 +4,9 @@
 
 **Extension navigateur (Chrome / Edge) pour suivre [TVABDOU](https://twitch.tv/tvabdou) en un coup d'œil.**
 
-Sais si le stream est en live, affiche la dernière VOD, le planning, les dernières
-vidéos YouTube et les dernières publications Patreon — avec notifications.
+Sais si le stream est en live, affiche les derniers lives et temps forts, le planning,
+les dernières vidéos des **2 chaînes YouTube** et les dernières publications Patreon —
+avec notifications.
 
 Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
 
@@ -17,15 +18,20 @@ Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
 
 - 🔴 **Badge d'état** sur l'icône : `LIVE` (menthe) quand il stream, `OFF` sinon.
   L'icône est l'avatar de TVABDOU.
-- 📺 **Onglet Live / VOD**
+- 📺 **Onglet Live / Rediffs**
   - En live : miniature, titre, nombre de viewers et **durée du stream**.
-  - Hors ligne : **dernière VOD** avec sa date, sa durée et son nombre de vues.
+  - Hors ligne : les **3 derniers lives passés et temps forts** (date, durée, vues).
+    Les clips et les vidéos téléversées sont exclus.
 - 📅 **Onglet Planning** : le planning [planning-live.vercel.app](https://planning-live.vercel.app/) intégré.
-- ▶️ **Onglet Vidéos** : les **3 dernières vidéos YouTube**.
+- ▶️ **Onglet Vidéos** : les **3 dernières vidéos de chaque chaîne YouTube** —
+  [@hdkabdou](https://www.youtube.com/@hdkabdou) et
+  [@abdou_mp4](https://www.youtube.com/@abdou_mp4) — en deux sections.
 - Ⓟ **Onglet Patreon** : les **3 dernières publications Patreon**.
-- 🔗 **Réseaux** (Twitch, YouTube, Patreon, Discord) accessibles sur chaque onglet.
-- 🔔 **Notifications** au passage en live et à chaque nouvelle vidéo YouTube,
-  avec un bouton pour les activer / couper.
+- 🔗 **Réseaux** (Twitch, les 2 chaînes YouTube avec leur vraie photo de profil,
+  Patreon, Discord) accessibles sur chaque onglet.
+- 🔔 **Notifications** au passage en live, à chaque nouvelle vidéo sur **l'une des deux
+  chaînes YouTube** (le nom de la chaîne est indiqué) et à chaque nouvelle publication
+  Patreon, avec un bouton pour les activer / couper.
 - ↻ **Bouton Actualiser** pour recharger les données à la demande (sans cache).
 
 > **Aucune clé API dans l'extension.** Les clés (Twitch, YouTube, Patreon) vivent
@@ -58,15 +64,19 @@ rechargée depuis un autre dossier, c'est **la même extension** (réglages cons
 ```
 extension-tvAbdou/
 ├── manifest.json        Manifest MV3
-├── background.js        Service worker : badge LIVE/OFF, notifications, polling
+├── background.js        Service worker : badge LIVE/OFF, notifications (live/YouTube x2/Patreon), polling
 ├── popup.html/.css/.js  Interface (4 onglets + barre réseaux + bouton actualiser)
-├── config.js            Chaîne, planning, réseaux
+├── config.js            Chaînes (Twitch + 2 YouTube), planning, réseaux
 ├── lib/api.js           Appels au proxy Vercel
 ├── icons/               Avatar + icônes d'état
 └── server/              Proxy serverless Vercel (garde les clés API)
+    ├── lib/
+    │   ├── twitch.js    Helper Twitch Helix
+    │   └── youtube.js   Helper YouTube (multi-chaînes)
     └── api/
-        ├── status.js    Live + dernière VOD (Twitch Helix)
-        ├── videos.js    3 dernières vidéos (YouTube Data API)
+        ├── status.js    Live + 3 derniers lives/temps forts (Twitch Helix)
+        ├── videos.js    3 dernières vidéos par chaîne (YouTube Data API)
+        ├── channels.js  Nom + photo de profil des chaînes YouTube
         └── patreon.js   3 dernières publications (Patreon API)
 ```
 
@@ -97,8 +107,14 @@ Voir [`server/README.md`](server/README.md) pour le détail. En résumé :
 ## 🎨 Personnalisation
 
 Tout est dans [`config.js`](config.js) : `proxyBase`, `twitchLogin`, `planningUrl`,
-`socials`, `pollMinutes`. Les identifiants de chaîne (login Twitch, handle YouTube,
-campagne Patreon) se règlent via les variables d'environnement du proxy.
+`youtube` (liste des chaînes affichées), `socials`, `pollMinutes`. Les identifiants de
+chaîne (login Twitch, handles YouTube, campagne Patreon) se règlent via les variables
+d'environnement du proxy — voir [`server/README.md`](server/README.md).
+
+Pour ajouter **une chaîne YouTube supplémentaire** : ajoute une entrée dans
+`CHANNELS` de [`server/lib/youtube.js`](server/lib/youtube.js) (même `key`) puis dans
+`CONFIG.youtube` de `config.js`. L'onglet Vidéos, les notifications et la barre de
+réseaux la prennent en compte automatiquement.
 
 ---
 

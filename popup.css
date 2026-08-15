@@ -133,6 +133,13 @@ main {
   background: rgba(22,21,28,.82); color: #fff; font-size: 11px;
   padding: 3px 8px; border-radius: 20px; font-weight: 700;
 }
+.badge-type {
+  position: absolute; top: 8px; left: 8px;
+  background: var(--primary); color: var(--ink); font-weight: 800; font-size: 11px;
+  padding: 3px 9px; border-radius: 20px; letter-spacing: .4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+.vod-list { margin-top: 10px; }
 .card-body { padding: 11px 12px; }
 .card-title {
   font-weight: 700; font-size: 13.5px; line-height: 1.3; margin-bottom: 8px;
@@ -184,16 +191,52 @@ main {
 .video-meta { padding: 8px 8px 8px 0; display: flex; flex-direction: column; justify-content: center; }
 .video-meta strong { font-size: 12px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .video-meta span { color: var(--muted); font-size: 11px; margin-top: 5px; }
+.video-meta .tag {
+  color: var(--primary-deep); background: var(--soft); border: 1px solid var(--border);
+  border-radius: 20px; padding: 1px 7px; margin-right: 4px; font-size: 10px;
+}
+
+/* Miniature avec duree (lives passes / temps forts) */
+.vi-thumb { position: relative; width: 116px; flex-shrink: 0; }
+.vi-thumb img { width: 100%; }
+.vi-dur {
+  position: absolute; bottom: 5px; right: 5px;
+  background: rgba(22,21,28,.82); color: #fff; font-size: 10px;
+  padding: 2px 6px; border-radius: 20px; font-weight: 700;
+}
+
+/* En-tete de chaine YouTube (onglet Videos) */
+.chan-block + .chan-block { margin-top: 14px; }
+.chan-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 8px;
+}
+.chan-id { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.chan-id b {
+  font-size: 12px; font-weight: 800; letter-spacing: .3px; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chan-avatar {
+  width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  border: 2px solid var(--surface); box-shadow: 0 2px 6px rgba(120,100,180,.25);
+}
+.chan-avatar.fallback {
+  display: grid; place-items: center; color: var(--primary-deep); background: var(--surface);
+}
+.chan-avatar.fallback svg { width: 14px; height: 14px; }
+.chan-head a { color: var(--secondary-deep); text-decoration: none; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.chan-head a:hover { text-decoration: underline; }
 
 /* ---------- Etats ---------- */
 .empty { text-align: center; color: var(--muted); padding: 34px 12px; line-height: 1.6; }
+.empty.small { padding: 14px 12px; font-size: 12px; }
 .empty a { color: var(--primary-deep); }
 .error { color: #c0392b; text-align: center; padding: 20px; font-size: 13px; }
 
 /* ---------- Barre reseaux (persistante, icone seule) ---------- */
 .social-bar {
   flex: none;
-  display: flex; gap: 11px; justify-content: center; padding: 10px 14px;
+  display: flex; gap: 9px; justify-content: center; padding: 10px 14px;
   background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 100%);
   border-top: 1px solid rgba(255,255,255,.4);
 }
@@ -205,6 +248,10 @@ main {
   transition: transform .16s, background .16s, color .16s;
 }
 .social svg { width: 22px; height: 22px; }
+/* Icone remplacee par la photo de profil reelle de la chaine YouTube */
+.social.avatar-social { overflow: hidden; padding: 0; background: var(--surface); }
+.social.avatar-social img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.social.avatar-social:hover img { filter: brightness(1.06); }
 .social:hover {
   transform: translateY(-3px) scale(1.05);
   background: linear-gradient(135deg, var(--primary-deep) 0%, var(--secondary-deep) 100%);

@@ -1,5 +1,12 @@
 import { CONFIG } from "./config.js";
-import { getStatus, getLatestVideos, getPatreonPosts, isConfigured } from "./lib/api.js";
+import {
+  getStatus,
+  getLatestVideos,
+  getPatreonPosts,
+  getYoutubeChannels,
+  vodsOf,
+  isConfigured
+} from "./lib/api.js";
 
 // ---------- Formatage ----------
 function pad(n) { return String(n).padStart(2, "0"); }
@@ -53,7 +60,64 @@ const SOCIAL_SVG = {
   discord: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.369a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.056c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>'
 };
 
+// ---------- Chaines YouTube (nom + photo de profil), memorise pour la session ----------
+let channelsPromise = null;
+function youtubeChannels(bust) {
+  if (!channelsPromise || bust) {
+    channelsPromise = getYoutubeChannels(bust).catch(() => []);
+  }
+  return channelsPromise;
+}
+function channelInfo(list, key) {
+  const cfg = CONFIG.youtube.find((c) => c.key === key) || {};
+  const api = (list || []).find((c) => c.key === key) || {};
+  return {
+    key,
+    title: api.title || cfg.name || cfg.handle || "",
+    handle: api.handle || cfg.handle || "",
+    url: api.url || cfg.url || "#",
+    avatar: api.avatar || null
+  };
+}
+
 // ---------- Live / VOD ----------
+const VOD_LABEL = { archive: "Live", highlight: "Temps fort" };
+
+function vodCard(v) {
+  const label = VOD_LABEL[v.type] || "Live";
+  return `
+    <div class="stream-card">
+      <a class="thumb-wrap" href="${v.url}" target="_blank">
+        ${v.thumbnail ? `<img src="${v.thumbnail}" alt="">` : ""}
+        <span class="badge-type">${label}</span>
+        <span class="badge-time">⏱ ${fmtVodDuration(v.duration)}</span>
+      </a>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(v.title)}</div>
+        <div class="meta-row">
+          <span class="chip">📅 <b>${relative(v.date)}</b></span>
+          <span class="chip">👁 <b>${fmtNumber(v.views)}</b> vues</span>
+        </div>
+        <a class="watch-btn" href="${v.url}" target="_blank">Regarder</a>
+      </div>
+    </div>`;
+}
+
+function vodItem(v) {
+  const label = VOD_LABEL[v.type] || "Live";
+  return `
+    <a class="video-item" href="${v.url}" target="_blank">
+      <div class="vi-thumb">
+        ${v.thumbnail ? `<img src="${v.thumbnail}" alt="">` : ""}
+        <span class="vi-dur">${fmtVodDuration(v.duration)}</span>
+      </div>
+      <div class="video-meta">
+        <strong>${escapeHtml(v.title)}</strong>
+        <span><b class="tag">${label}</b> ${relative(v.date)} • ${fmtNumber(v.views)} vues</span>
+      </div>
+    </a>`;
+}
+
 async function renderLive(bust) {
   const el = document.getElementById("liveContent");
   const pill = document.getElementById("statusPill");
@@ -82,26 +146,14 @@ async function renderLive(bust) {
     } else {
       pill.textContent = "HORS LIGNE";
       pill.className = "pill off";
-      const vod = d.vod;
-      if (!vod) {
-        el.innerHTML = `<div class="empty">Aucune VOD disponible.</div>`;
+      const vods = vodsOf(d).slice(0, 3);
+      if (!vods.length) {
+        el.innerHTML = `<div class="empty">Aucun live ni temps fort disponible.</div>`;
       } else {
         el.innerHTML = `
-          <div class="section-label">Dernière VOD</div>
-          <div class="stream-card">
-            <a class="thumb-wrap" href="${vod.url}" target="_blank">
-              ${vod.thumbnail ? `<img src="${vod.thumbnail}" alt="">` : ""}
-              <span class="badge-time">⏱ ${fmtVodDuration(vod.duration)}</span>
-            </a>
-            <div class="card-body">
-              <div class="card-title">${escapeHtml(vod.title)}</div>
-              <div class="meta-row">
-                <span class="chip">📅 <b>${relative(vod.date)}</b></span>
-                <span class="chip">👁 <b>${fmtNumber(vod.views)}</b> vues</span>
-              </div>
-              <a class="watch-btn" href="${vod.url}" target="_blank">Voir la VOD</a>
-            </div>
-          </div>`;
+          <div class="section-label">Derniers lives &amp; temps forts</div>
+          ${vodCard(vods[0])}
+          ${vods.length > 1 ? `<div class="vod-list">${vods.slice(1).map(vodItem).join("")}</div>` : ""}`;
       }
     }
   } catch (e) {
@@ -149,16 +201,25 @@ async function renderPatreon(bust) {
   }
 }
 
-// ---------- Videos ----------
-async function renderVideos(bust) {
-  const el = document.getElementById("videosContent");
-  try {
-    const vids = await getLatestVideos(3, bust);
-    if (!vids.length) {
-      el.innerHTML = `<div class="empty">Aucune vidéo trouvée.</div>`;
-      return;
-    }
-    el.innerHTML = vids.map((v) => `
+// ---------- Videos (une section par chaine YouTube) ----------
+const YT_MINI_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>';
+
+function videosSection(info, vids, err) {
+  const head = `
+    <div class="chan-head">
+      <span class="chan-id">
+        ${info.avatar
+          ? `<img class="chan-avatar" src="${info.avatar}" alt="">`
+          : `<span class="chan-avatar fallback">${YT_MINI_SVG}</span>`}
+        <b>${escapeHtml(info.title)}</b>
+      </span>
+      <a href="${info.url}" target="_blank">Voir la chaîne ↗</a>
+    </div>`;
+  let body;
+  if (err) body = `<div class="error">Erreur : ${escapeHtml(err)}</div>`;
+  else if (!vids.length) body = `<div class="empty small">Aucune vidéo trouvée.</div>`;
+  else
+    body = vids.map((v) => `
       <a class="video-item" href="${v.url}" target="_blank">
         ${v.thumbnail ? `<img src="${v.thumbnail}" alt="">` : ""}
         <div class="video-meta">
@@ -166,18 +227,47 @@ async function renderVideos(bust) {
           <span>${relative(v.date)}</span>
         </div>
       </a>`).join("");
-  } catch (e) {
-    el.innerHTML = `<div class="error">Erreur : ${escapeHtml(e.message)}</div>`;
-  }
+  return `<div class="chan-block">${head}${body}</div>`;
+}
+
+async function renderVideos(bust) {
+  const el = document.getElementById("videosContent");
+  const [list, ...results] = await Promise.all([
+    youtubeChannels(bust),
+    ...CONFIG.youtube.map((c) =>
+      getLatestVideos(3, bust, c.key).then(
+        (vids) => ({ vids }),
+        (e) => ({ vids: [], err: e.message })
+      )
+    )
+  ]);
+  el.innerHTML = CONFIG.youtube
+    .map((c, i) => videosSection(channelInfo(list, c.key), results[i].vids, results[i].err))
+    .join("");
 }
 
 // ---------- Reseaux (icone seule, sur tous les onglets) ----------
 function renderSocials() {
   const el = document.getElementById("socials");
-  el.innerHTML = CONFIG.socials.map((s) => `
-    <a class="social ${s.icon}" href="${s.url}" target="_blank" title="${s.name}" aria-label="${s.name}">
+  el.innerHTML = CONFIG.socials.map((s, i) => `
+    <a class="social ${s.icon}" data-i="${i}" href="${s.url}" target="_blank"
+       title="${escapeHtml(s.name)}" aria-label="${escapeHtml(s.name)}">
       ${SOCIAL_SVG[s.icon] || ""}
     </a>`).join("");
+  // Remplace les icones YouTube par la vraie photo de profil des chaines (async).
+  youtubeChannels().then((list) => {
+    CONFIG.socials.forEach((s, i) => {
+      if (!s.ytKey) return;
+      const info = channelInfo(list, s.ytKey);
+      if (!info.avatar) return;
+      const a = el.querySelector(`.social[data-i="${i}"]`);
+      if (!a) return;
+      a.classList.add("avatar-social");
+      a.title = info.title || s.name;
+      a.setAttribute("aria-label", info.title || s.name);
+      a.innerHTML = `<img src="${info.avatar}" alt="">`;
+    });
+  });
 }
 
 // ---------- Notifications toggle ----------

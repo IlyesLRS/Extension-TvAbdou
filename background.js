@@ -1,7 +1,7 @@
 // Service worker : verifie le live et les nouvelles videos YouTube via le proxy,
 // met a jour le badge (LIVE / OFF) et envoie des notifications.
 import { CONFIG } from "./config.js";
-import { getStatus, getLatestVideos, isConfigured } from "./lib/api.js";
+import { getStatus, getLatestVideos, getPatreonPosts, isConfigured } from "./lib/api.js";
 
 const ALARM = "tvabdou-poll";
 
@@ -108,18 +108,44 @@ async function poll() {
     console.warn("poll live:", e.message);
   }
 
-  // --- Nouvelle video YouTube ---
-  try {
-    const vids = await getLatestVideos(1);
-    if (vids.length) {
+  // --- Nouvelle video YouTube (une verification par chaine) ---
+  for (const ch of CONFIG.youtube) {
+    try {
+      const vids = await getLatestVideos(1, false, ch.key);
+      if (!vids.length) continue;
       const latest = vids[0];
-      const lastKnown = (await chrome.storage.local.get("lastVideoId")).lastVideoId;
+      // "main" garde l'ancienne cle de stockage : pas de notification en double a la mise a jour.
+      const storeKey = ch.key === "main" ? "lastVideoId" : "lastVideoId_" + ch.key;
+      const lastKnown = (await chrome.storage.local.get(storeKey))[storeKey];
       if (lastKnown && lastKnown !== latest.id) {
-        await notify("yt-" + latest.id, "Nouvelle video YouTube ! ▶️", latest.title, latest.url);
+        const who = latest.channelTitle || ch.name || ch.handle;
+        await notify("yt-" + latest.id, "Nouvelle video ! ▶️ " + who, latest.title, latest.url);
       }
-      await chrome.storage.local.set({ lastVideoId: latest.id });
+      await chrome.storage.local.set({ [storeKey]: latest.id });
+    } catch (e) {
+      console.warn("poll youtube " + ch.key + ":", e.message);
+    }
+  }
+
+  // --- Nouvelle publication Patreon ---
+  try {
+    const data = await getPatreonPosts();
+    const posts = (data && data.posts) || [];
+    if (data && data.configured !== false && posts.length) {
+      const latest = posts[0];
+      const key = latest.url || (latest.date + "|" + latest.title);
+      const lastKnown = (await chrome.storage.local.get("lastPatreonKey")).lastPatreonKey;
+      if (lastKnown && lastKnown !== key) {
+        await notify(
+          "patreon-" + Date.now(),
+          "Nouvelle publication Patreon ! Ⓟ",
+          latest.title || "Nouvelle publication",
+          latest.url
+        );
+      }
+      await chrome.storage.local.set({ lastPatreonKey: key });
     }
   } catch (e) {
-    console.warn("poll youtube:", e.message);
+    console.warn("poll patreon:", e.message);
   }
 }

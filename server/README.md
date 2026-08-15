@@ -4,8 +4,15 @@ Petit backend serverless qui garde les clés API Twitch/YouTube **côté serveur
 L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
 
 ## Endpoints
-- `GET /api/status` → `{ live, stream, vod }` (statut live + dernière VOD si hors ligne)
-- `GET /api/videos?max=3` → `{ videos: [...] }` (dernières vidéos YouTube)
+- `GET /api/status` → `{ live, stream, vods, vod }` — statut live ; hors ligne, `vods`
+  contient les **3 derniers lives passés et temps forts** (types Twitch `archive` et
+  `highlight` ; les vidéos téléversées et les clips sont exclus). `vod` = `vods[0]`,
+  conservé pour compatibilité avec les anciennes versions de l'extension.
+- `GET /api/videos?max=3&ch=main|second|all` → `{ videos: [...] }` — dernières vidéos
+  YouTube de la chaîne demandée (`main` = @hdkabdou, `second` = @abdou_mp4,
+  `all` = les deux fusionnées par date). Sans `ch`, c'est `main`.
+- `GET /api/channels` → `{ channels: [{ key, handle, title, avatar, url }] }` —
+  nom et photo de profil des deux chaînes YouTube (utilisé par la barre de réseaux).
 - `GET /api/patreon` → `{ configured, posts: [...] }` (3 dernières publications Patreon)
 
 ## Déploiement sur Vercel (5 min)
@@ -22,8 +29,10 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
    | `TWITCH_CLIENT_SECRET` | ton Client Secret Twitch |
    | `YOUTUBE_API_KEY` | ta clé API YouTube |
    | `TWITCH_LOGIN` | `tvabdou` *(optionnel)* |
-   | `YOUTUBE_HANDLE` | `@hdkabdou` *(optionnel)* |
-   | `YOUTUBE_CHANNEL_ID` | `UC...` *(optionnel, prioritaire sur le handle)* |
+   | `YOUTUBE_HANDLE` | `@hdkabdou` — chaîne 1 *(optionnel)* |
+   | `YOUTUBE_CHANNEL_ID` | `UC...` — chaîne 1 *(optionnel, prioritaire sur le handle)* |
+   | `YOUTUBE_HANDLE_2` | `@abdou_mp4` — chaîne 2 *(optionnel)* |
+   | `YOUTUBE_CHANNEL_ID_2` | `UC...` — chaîne 2 *(optionnel, prioritaire sur le handle)* |
    | `PATREON_ACCESS_TOKEN` | jeton créateur Patreon *(pour l'onglet Patreon)* |
 6. **Deploy**. Tu obtiens une URL du type `https://tvabdou-proxy.vercel.app`.
 

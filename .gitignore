@@ -11,3 +11,6 @@ node_modules/
 
 # Archives de release (uploadees sur GitHub Releases, pas dans le repo)
 *.zip
+
+# Zip construit par npm run build (a envoyer sur le Chrome Web Store)
+dist/

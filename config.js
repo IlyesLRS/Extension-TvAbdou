@@ -1,4 +1,8 @@
-// Configuration de l'extension.
+// Configuration embarquee de l'extension = COPIE DE SECOURS.
+// Les liens, reseaux, chaines YouTube, planning et frequence se changent cote serveur,
+// dans server/lib/site-config.js : l'extension les recupere toute seule (lib/settings.js)
+// et n'utilise ces valeurs que si le serveur n'a encore jamais repondu.
+// Seul proxyBase doit imperativement etre juste ici.
 // Aucune cle API ici : tout passe par le proxy Vercel (dossier /server).
 export const CONFIG = {
   // Proxy Vercel (garde les cles API cote serveur).
@@ -10,7 +14,7 @@ export const CONFIG = {
   planningUrl: "https://planning-live.vercel.app/",
 
   // Chaines YouTube suivies (onglet Videos + notifications).
-  // "key" doit correspondre aux cles cote proxy (server/api/videos.js).
+  // "key" doit correspondre aux cles cote proxy (server/lib/site-config.js).
   youtube: [
     { key: "main",   name: "HDKABDOU",  handle: "@hdkabdou",  url: "https://www.youtube.com/@hdkabdou"  },
     { key: "second", name: "ABDOU MP4", handle: "@abdou_mp4", url: "https://www.youtube.com/@abdou_mp4" }

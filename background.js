@@ -1,19 +1,32 @@
 // Service worker : verifie le live et les nouvelles videos YouTube via le proxy,
 // met a jour le badge (LIVE / OFF) et envoie des notifications.
-import { CONFIG } from "./config.js";
+// La config (liens, chaines, frequence) vient de lib/settings.js : copie embarquee
+// + config distante du proxy, rafraichie toute seule.
 import { getStatus, getLatestVideos, getPatreonPosts, isConfigured } from "./lib/api.js";
+import { getConfig, refreshConfig } from "./lib/settings.js";
 
 const ALARM = "tvabdou-poll";
 
+// (Re)programme l'alarme seulement si la frequence a change (sinon le minuteur repartirait de zero).
+async function schedule() {
+  const { pollMinutes } = await getConfig();
+  const period = Math.max(1, Number(pollMinutes) || 1);
+  const current = await chrome.alarms.get(ALARM);
+  if (!current || current.periodInMinutes !== period) {
+    await chrome.alarms.create(ALARM, { periodInMinutes: period });
+  }
+}
+
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureDefaults();
-  chrome.alarms.create(ALARM, { periodInMinutes: Math.max(1, CONFIG.pollMinutes) });
+  await refreshConfig(true);
+  await schedule();
   await setOffline();
   poll();
 });
 
-chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create(ALARM, { periodInMinutes: Math.max(1, CONFIG.pollMinutes) });
+chrome.runtime.onStartup.addListener(async () => {
+  await schedule();
   poll();
 });
 
@@ -84,6 +97,10 @@ async function poll() {
     await chrome.action.setTitle({ title: "Proxy non configure (config.js)" });
     return;
   }
+
+  // Config distante (au plus une requete toutes les 15 min).
+  if (await refreshConfig()) await schedule();
+  const CONFIG = await getConfig();
 
   // --- Live ---
   try {

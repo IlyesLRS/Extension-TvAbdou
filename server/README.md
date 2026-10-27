@@ -16,10 +16,38 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
 - `GET /api/patreon` → `{ configured, posts: [...] }` (3 dernières publications Patreon).
   Si le jeton est absent, expiré ou révoqué : `{ configured: false, reason: "auth" }`
   (jamais d'erreur brute — l'onglet affiche la marche à suivre).
+- `GET /api/config` → config publique de l'extension (liens, réseaux, chaînes YouTube,
+  planning, fréquence), définie dans [`lib/site-config.js`](lib/site-config.js).
+  L'extension la récupère toute seule : la modifier ne demande pas de nouvelle version.
+- `GET /api/cron/patreon` → lancé **une fois par jour par le cron Vercel**
+  ([`vercel.json`](vercel.json)) : renouvelle le jeton Patreon bien avant son expiration,
+  vérifie l'accès et alerte sur Discord en cas de problème. Ouvert dans un navigateur
+  (sans le secret du cron), il affiche seulement l'état, sans aucun jeton.
+- `GET /confidentialite` → politique de confidentialité (demandée par le Chrome Web Store).
 
-> ⚠️ **Les jetons Patreon expirent** (~1 mois). Renseigne `PATREON_CLIENT_ID`,
-> `PATREON_CLIENT_SECRET` et `PATREON_REFRESH_TOKEN` : le proxy renouvelle alors
-> l'accès tout seul, sans intervention. Voir *Où trouver les clés* plus bas.
+## 🔑 Patreon : pourquoi un stockage Supabase
+
+Chez Patreon, le **refresh token ne sert qu'une fois** : à chaque renouvellement, Patreon
+en donne un nouveau et l'ancien ne marche plus. Avant, le nouveau n'était gardé qu'en
+mémoire : au redémarrage du serveur (fréquent sur Vercel), le proxy reprenait l'ancien
+jeton des variables Vercel, déjà consommé → l'onglet Patreon cassait tous les mois.
+
+Maintenant, le jeton courant est rangé dans la table privée `public.ext_patreon_token`
+du projet Supabase **reseaux-tvabdou** (accès réservé à la clé secrète) :
+
+- le serveur la lit au démarrage et l'écrit à chaque renouvellement ;
+- un verrou empêche deux serveurs de renouveler en même temps (le jeton serait grillé) ;
+- le cron quotidien renouvelle dès qu'il reste moins de 10 jours ;
+- si l'accès casse quand même (accès révoqué sur Patreon…), une alerte part sur Discord
+  (au plus une toutes les 12 h), puis un message « rétabli » quand ça remarche.
+
+**Réparer à la main (rare) :** sur la page du client Patreon (voir *Où trouver les clés*),
+clique pour régénérer les jetons, copie le *Creator's Access Token* et le *Creator's Refresh
+Token* dans `PATREON_ACCESS_TOKEN` et `PATREON_REFRESH_TOKEN` sur Vercel, puis
+**redéploie**. Le serveur voit que les jetons de Vercel ont changé et les reprend tout seul.
+
+Sans `SUPABASE_URL` / `SUPABASE_SECRET_KEY`, le proxy retombe sur l'ancien fonctionnement
+(mémoire seule).
 
 ## Déploiement sur Vercel (5 min)
 
@@ -43,6 +71,10 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
    | `PATREON_CLIENT_ID` | Client ID Patreon *(renouvellement auto)* |
    | `PATREON_CLIENT_SECRET` | Client Secret Patreon *(renouvellement auto)* |
    | `PATREON_REFRESH_TOKEN` | Creator's Refresh Token *(renouvellement auto)* |
+   | `SUPABASE_URL` | `https://vxdexzrjnheojiztarsf.supabase.co` (projet reseaux-tvabdou) |
+   | `SUPABASE_SECRET_KEY` | clé secrète Supabase `sb_secret_...` (Project Settings → API Keys) |
+   | `DISCORD_WEBHOOK_URL` | webhook d'un salon privé Discord *(optionnel : alertes Patreon)* |
+   | `CRON_SECRET` | une longue chaîne aléatoire *(optionnel : réserve le cron à Vercel)* |
 6. **Deploy**. Tu obtiens une URL du type `https://tvabdou-proxy.vercel.app`.
 
 ### Option B — via la CLI
@@ -77,7 +109,12 @@ proxyBase: "https://TON-URL.vercel.app"
   | Creator's Access Token | `PATREON_ACCESS_TOKEN` |
   | Creator's Refresh Token | `PATREON_REFRESH_TOKEN` |
 
-  Avec les quatre, le proxy renouvelle l'accès automatiquement quand le jeton expire
-  (il rejoue la requête après un `401`). Avec le seul `PATREON_ACCESS_TOKEN`, l'onglet
-  cesse de fonctionner à l'expiration et il faut recopier le jeton à la main.
+  Avec les quatre (et Supabase), le proxy renouvelle l'accès tout seul, indéfiniment.
+  Avec le seul `PATREON_ACCESS_TOKEN`, l'onglet cesse de fonctionner à l'expiration et il
+  faut recopier le jeton à la main.
   *(Sans aucun jeton, l'onglet Patreon affiche simplement un message d'explication.)*
+- **Supabase** : projet *reseaux-tvabdou* → **Project Settings → API Keys** → copie une
+  clé **secrète** (`sb_secret_...`) dans `SUPABASE_SECRET_KEY`. Ne la mets jamais dans
+  l'extension. (L'ancienne clé `service_role` marche aussi.)
+- **Discord** : dans le salon privé voulu → **Modifier le salon → Intégrations → Webhooks →
+  Nouveau webhook** → **Copier l'URL du webhook** dans `DISCORD_WEBHOOK_URL`.

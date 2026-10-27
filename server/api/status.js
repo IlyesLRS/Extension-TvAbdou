@@ -1,7 +1,8 @@
 // GET /api/status  -> statut live + 3 derniers contenus (lives passes / temps forts) si hors ligne
 import { helix, getUserId } from "../lib/twitch.js";
+import { SITE_CONFIG } from "../lib/site-config.js";
 
-const LOGIN = process.env.TWITCH_LOGIN || "tvabdou";
+const LOGIN = process.env.TWITCH_LOGIN || SITE_CONFIG.twitchLogin || "tvabdou";
 
 // Types Twitch gardes : "archive" = rediffusion de live, "highlight" = temps fort.
 // "upload" (videos televersees) est exclu ; les clips ne sont pas renvoyes par cet endpoint.

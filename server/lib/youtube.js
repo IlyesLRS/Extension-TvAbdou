@@ -1,23 +1,29 @@
 // Helper YouTube Data API v3 cote serveur (cle dans les variables d'env Vercel).
+import { SITE_CONFIG } from "./site-config.js";
+
 export const KEY = process.env.YOUTUBE_API_KEY;
 
-// Chaines suivies. Chaque entree est surchargeable par variables d'environnement.
+// Chaines suivies : celles de site-config.js. Chacune est surchargeable par variables
+// d'environnement (YOUTUBE_HANDLE / YOUTUBE_CHANNEL_ID pour la 1re, suffixe _2 pour la 2e, etc.).
 // L'ID (UC...) est prioritaire sur le handle quand il est fourni.
-export const CHANNELS = {
-  main: {
-    key: "main",
-    handle: (process.env.YOUTUBE_HANDLE || "@hdkabdou").replace(/^@/, ""),
-    id: process.env.YOUTUBE_CHANNEL_ID || ""
-  },
-  second: {
-    key: "second",
-    handle: (process.env.YOUTUBE_HANDLE_2 || "@abdou_mp4").replace(/^@/, ""),
-    id: process.env.YOUTUBE_CHANNEL_ID_2 || ""
-  }
-};
+export const CHANNELS = Object.fromEntries(
+  SITE_CONFIG.youtube.map((c, i) => {
+    const sfx = i === 0 ? "" : "_" + (i + 1);
+    return [
+      c.key,
+      {
+        key: c.key,
+        handle: (process.env["YOUTUBE_HANDLE" + sfx] || c.handle).replace(/^@/, ""),
+        id: process.env["YOUTUBE_CHANNEL_ID" + sfx] || c.channelId || ""
+      }
+    ];
+  })
+);
+
+export const DEFAULT_CHANNEL = Object.keys(CHANNELS)[0];
 
 export function channelOf(key) {
-  return CHANNELS[key] || CHANNELS.main;
+  return CHANNELS[key] || CHANNELS[DEFAULT_CHANNEL];
 }
 
 async function api(path, params) {

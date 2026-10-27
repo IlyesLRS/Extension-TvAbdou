@@ -1,8 +1,7 @@
 // GET /api/patreon -> 3 dernieres publications Patreon du createur.
 // Authentification et renouvellement du jeton : ../lib/patreon.js
-import { patreonGet as pget, isConfigured } from "../lib/patreon.js";
+import { patreonGet as pget, isConfigured, API } from "../lib/patreon.js";
 
-const API = "https://www.patreon.com/api/oauth2/v2";
 const FIELDS = "fields%5Bpost%5D=title,url,published_at,embed_url,is_public";
 
 let campaignCache = null;
@@ -50,10 +49,10 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=300");
 
-  if (!isConfigured()) {
-    return res.status(200).json({ configured: false, posts: [] });
-  }
   try {
+    if (!(await isConfigured())) {
+      return res.status(200).json({ configured: false, posts: [] });
+    }
     const id = await getCampaignId();
     const all = await fetchAllPosts(id);
     all.sort((a, b) => {

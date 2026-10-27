@@ -42,20 +42,26 @@ Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
 
 ## 🚀 Installation
 
-1. Télécharge le `.zip` de la [dernière release](../../releases/latest) et décompresse-le
-   (ou clone ce dépôt).
-2. Ouvre `chrome://extensions` (ou `edge://extensions`).
-3. Active le **Mode développeur** (en haut à droite).
-4. Clique **Charger l'extension non empaquetée** et sélectionne le dossier
-   (celui qui contient `manifest.json`).
+Installe l'extension depuis le **Chrome Web Store** (lien non répertorié :
+*à ajouter ici après la première publication*), puis clique **Ajouter à Chrome**.
+Ça marche aussi sur **Edge**.
 
 L'icône TVABDOU apparaît dans la barre d'outils. ✅
 
-### 🔄 Mettre à jour
-Charge l'extension depuis un **dossier stable** (le dépôt cloné), puis à chaque
-mise à jour clique simplement **↻ Recharger** sur la carte de l'extension dans
-`chrome://extensions`. Le champ `key` du manifest fige l'identifiant : même
-rechargée depuis un autre dossier, c'est **la même extension** (réglages conservés).
+### 🔄 Mises à jour : automatiques
+Il n'y a **rien à faire** : Chrome vérifie les mises à jour du Web Store plusieurs fois
+par jour et les installe tout seul. Et les liens, réseaux et chaînes YouTube changent
+même **sans nouvelle version** : l'extension les récupère sur le serveur
+(voir *Personnalisation*).
+
+> **Tu avais installé une ancienne version en « non empaquetée » ?** Supprime-la dans
+> `chrome://extensions` après avoir installé celle du Store, sinon tu recevras chaque
+> notification en double.
+
+### 🧪 Tester une version en développement
+`chrome://extensions` → **Mode développeur** → **Charger l'extension non empaquetée** →
+choisis ce dossier (celui qui contient `manifest.json`), puis **↻ Recharger** après chaque
+modification.
 
 ---
 
@@ -66,18 +72,30 @@ extension-tvAbdou/
 ├── manifest.json        Manifest MV3
 ├── background.js        Service worker : badge LIVE/OFF, notifications (live/YouTube x2/Patreon), polling
 ├── popup.html/.css/.js  Interface (4 onglets + barre réseaux + bouton actualiser)
-├── config.js            Chaînes (Twitch + 2 YouTube), planning, réseaux
-├── lib/api.js           Appels au proxy Vercel
+├── config.js            proxyBase + copie de secours de la config (liens, chaînes, planning)
+├── lib/
+│   ├── api.js           Appels au proxy Vercel
+│   └── settings.js      Config effective : config distante du serveur, sinon config.js
 ├── icons/               Avatar + icônes d'état
+├── scripts/build.mjs    Construit le zip pour le Chrome Web Store (npm run build)
+├── store/               Fiche Chrome Web Store : textes, captures, vignette
 └── server/              Proxy serverless Vercel (garde les clés API)
+    ├── vercel.json      Cron quotidien Patreon + adresse /confidentialite
     ├── lib/
+    │   ├── site-config.js  ⭐ Liens, réseaux, chaînes YouTube (servis à l'extension)
     │   ├── twitch.js    Helper Twitch Helix
-    │   └── youtube.js   Helper YouTube (multi-chaînes)
+    │   ├── youtube.js   Helper YouTube (multi-chaînes)
+    │   ├── patreon.js   Jeton Patreon + renouvellement automatique
+    │   ├── store.js     Stockage du jeton Patreon dans Supabase
+    │   └── alert.js     Alerte Discord si Patreon casse
     └── api/
+        ├── config.js    Config publique de l'extension
         ├── status.js    Live + 3 derniers lives/temps forts (Twitch Helix)
         ├── videos.js    3 dernières vidéos par chaîne (YouTube Data API)
         ├── channels.js  Nom + photo de profil des chaînes YouTube
-        └── patreon.js   3 dernières publications (Patreon API)
+        ├── patreon.js   3 dernières publications (Patreon API)
+        ├── privacy.js   Politique de confidentialité (/confidentialite)
+        └── cron/patreon.js  Renouvellement + vérification Patreon, 1 fois par jour
 ```
 
 L'extension ne parle qu'au **proxy** ; le proxy détient les clés (variables
@@ -99,22 +117,37 @@ Voir [`server/README.md`](server/README.md) pour le détail. En résumé :
    | `TWITCH_CLIENT_SECRET` | Twitch |
    | `YOUTUBE_API_KEY` | YouTube (onglet Vidéos + notifs) |
    | `PATREON_ACCESS_TOKEN` + `PATREON_CLIENT_ID` / `_SECRET` / `PATREON_REFRESH_TOKEN` | Patreon (onglet Patreon, avec renouvellement automatique du jeton) |
+   | `SUPABASE_URL` + `SUPABASE_SECRET_KEY` | Stockage durable du jeton Patreon (projet Supabase reseaux-tvabdou) |
+   | `DISCORD_WEBHOOK_URL` | Alerte Discord si l'accès Patreon casse *(optionnel)* |
+   | `CRON_SECRET` | Protège le cron quotidien *(optionnel, recommandé)* |
 
 3. Déploie, puis renseigne l'URL du proxy dans [`config.js`](config.js) (`proxyBase`).
 
 ---
 
-## 🎨 Personnalisation
+## 🎨 Personnalisation (sans nouvelle version)
 
-Tout est dans [`config.js`](config.js) : `proxyBase`, `twitchLogin`, `planningUrl`,
-`youtube` (liste des chaînes affichées), `socials`, `pollMinutes`. Les identifiants de
-chaîne (login Twitch, handles YouTube, campagne Patreon) se règlent via les variables
-d'environnement du proxy — voir [`server/README.md`](server/README.md).
+Les liens, réseaux, chaînes YouTube, le planning et la fréquence de vérification se
+changent dans [`server/lib/site-config.js`](server/lib/site-config.js). Après le
+redéploiement Vercel, **toutes les extensions installées les récupèrent toutes seules**
+(sous 15 minutes environ) : pas de nouvelle version à publier.
 
-Pour ajouter **une chaîne YouTube supplémentaire** : ajoute une entrée dans
-`CHANNELS` de [`server/lib/youtube.js`](server/lib/youtube.js) (même `key`) puis dans
-`CONFIG.youtube` de `config.js`. L'onglet Vidéos, les notifications et la barre de
-réseaux la prennent en compte automatiquement.
+- **Ajouter un réseau** : une ligne dans `socials` (icônes disponibles : twitch, youtube,
+  patreon, discord, instagram, tiktok, x, kick, threads, bluesky, link).
+- **Ajouter une chaîne YouTube** : une entrée dans `youtube` (avec une `key` nouvelle).
+  L'onglet Vidéos et les notifications la prennent en compte automatiquement.
+
+[`config.js`](config.js) ne sert plus que de copie de secours (et pour `proxyBase`).
+Une nouvelle version sur le Store n'est nécessaire que pour changer le code ou le design.
+
+---
+
+## 📦 Publier une nouvelle version
+
+Tout est détaillé dans [`store/fiche-chrome-web-store.md`](store/fiche-chrome-web-store.md).
+En résumé : augmente `version` dans `manifest.json`, lance `npm run build`, puis envoie
+`dist/Extension-TvAbdou-vX.Y.Z.zip` sur le tableau de bord du Chrome Web Store. Après la
+vérification de Google, tout le monde est mis à jour automatiquement.
 
 ---
 
@@ -122,4 +155,7 @@ réseaux la prennent en compte automatiquement.
 
 Les clés API ne sont **jamais** dans l'extension ni sur GitHub : elles restent dans
 les variables d'environnement Vercel, côté serveur. Le proxy n'expose que des
-données publiques (statut live, VOD, vidéos, publications).
+données publiques (statut live, VOD, vidéos, publications). Le jeton Patreon courant est
+rangé dans une table Supabase privée, accessible seulement avec la clé secrète du serveur.
+L'extension ne collecte aucune donnée personnelle
+([politique de confidentialité](https://extension-tvabdou.vercel.app/confidentialite)).

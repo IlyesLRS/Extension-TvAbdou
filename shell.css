@@ -1,0 +1,6 @@
+/* Cadre de la fenetre : memes dimensions que l'interface (server/public/popup/popup.css). */
+html, body {
+  width: 384px; height: 596px; margin: 0; overflow: hidden;
+  background: linear-gradient(180deg, #f4f0fd 0%, #ecf8f2 100%);
+}
+#ui { display: block; width: 384px; height: 596px; border: 0; background: transparent; }

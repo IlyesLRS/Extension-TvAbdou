@@ -1,7 +1,13 @@
-# Fiche Chrome Web Store — TVABDOU Live Tracker
+# Fiche boutique — TVABDOU Live Tracker (optionnel)
 
-Tout ce qu'il faut copier-coller dans le tableau de bord du Chrome Web Store, dans l'ordre.
-Publication choisie : **non répertoriée** (installable seulement avec le lien).
+> **Pas utilisé pour l'instant** : l'extension est distribuée par les releases GitHub et son
+> interface se met à jour toute seule depuis le serveur. Cette fiche sert seulement si un jour
+> tu publies sur une boutique : le **Chrome Web Store** (5 $ une fois) ou **Edge Add-ons**
+> (gratuit, partenaire Microsoft). Les textes ci-dessous valent pour les deux.
+> Pour la boutique, construis le zip avec `npm run build -- --store` (sans le champ `key`).
+
+Tout ce qu'il faut copier-coller dans le tableau de bord, dans l'ordre.
+Publication conseillée : **non répertoriée** (installable seulement avec le lien).
 
 ---
 
@@ -14,8 +20,8 @@ Publication choisie : **non répertoriée** (installable seulement avec le lien)
 
 ## 2. Construire et envoyer le zip
 
-1. À la racine du projet : `npm run build` → crée `dist/Extension-TvAbdou-v1.2.0.zip`
-   (le script refuse de construire si le manifest n'est pas accepté par le Store).
+1. À la racine du projet : `npm run build -- --store` → crée
+   `dist/Extension-TvAbdou-v1.2.0-store.zip` (sans le champ `key`, refusé par les boutiques).
 2. Tableau de bord → **Nouvel élément** → dépose le zip.
 
 ## 3. Onglet « Fiche du Store »
@@ -71,8 +77,9 @@ Suivre l'activité du créateur TVABDOU (live Twitch, rediffusions, vidéos YouT
 | Autorisation d'hôte `https://extension-tvabdou.vercel.app/*` | `Seul serveur contacté : il renvoie les informations publiques de TVABDOU (statut du live, rediffusions, vidéos, publications) et la liste des liens. Aucune donnée sur l'utilisateur n'y est envoyée.` |
 
 **Code distant :** coche **« Non, je n'utilise pas de code distant »**.
-(L'extension télécharge seulement des données JSON et affiche le planning dans un cadre ;
-tout le code est dans le zip.)
+(Tout le code de l'extension est dans le zip ; l'interface du serveur est affichée dans un
+cadre comme une page web, sans accès aux fonctions de l'extension hormis le pont limité de
+`shell.js`. À préciser dans le champ de justification si la boutique le demande.)
 
 **Utilisation des données :** ne coche **aucune** catégorie de données collectées, puis
 coche les **trois** certifications (pas de vente, pas d'usage sans rapport avec l'objectif,
@@ -102,7 +109,7 @@ heures à quelques jours. Une fois validée, copie le lien de la fiche :
 
 1. Fais les changements dans le code.
 2. Augmente `version` dans `manifest.json` (ex. `1.2.0` → `1.2.1`).
-3. `npm run build`.
+3. `npm run build -- --store`.
 4. Tableau de bord → l'extension → **Package** → **Importer un nouveau package** →
    envoie le nouveau zip, puis **Envoyer pour examen**.
 5. Après validation, Chrome met à jour tout le monde **automatiquement**, sans rien faire.

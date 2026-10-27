@@ -1,15 +1,19 @@
-// Config effective : copie locale de la config distante du proxy, sinon config.js.
-import { getConfig, refreshConfig } from "./lib/settings.js";
-import {
-  getStatus,
-  getLatestVideos,
-  getPatreonPosts,
-  getYoutubeChannels,
-  vodsOf,
-  isConfigured
-} from "./lib/api.js";
+// Interface de l'extension TVABDOU.
+// Elle est servie par le serveur (/popup/) et affichee dans la fenetre de l'extension :
+// la modifier ici puis redeployer suffit, sans reinstaller l'extension.
+// Une copie embarquee prend le relais si le serveur ne repond pas (voir platform.js).
+import { platform, announceReady, requestFallback, EXT_VERSION } from "./platform.js";
+import { setBase, getStatus, getLatestVideos, getPatreonPosts, getYoutubeChannels, vodsOf } from "./api.js";
 
-let CONFIG = await getConfig();
+let CONFIG;
+try {
+  CONFIG = await platform.getConfig();
+  setBase(await platform.proxyBase());
+} catch (e) {
+  // Le serveur ne repond pas : la fenetre de l'extension passe sur la copie locale.
+  requestFallback(e.message);
+  throw e;
+}
 
 // ---------- Formatage ----------
 function pad(n) { return String(n).padStart(2, "0"); }
@@ -265,7 +269,7 @@ function renderSocials() {
   el.innerHTML = CONFIG.socials.map((s, i) => `
     <a class="social ${s.icon}" data-i="${i}" href="${s.url}" target="_blank"
        title="${escapeHtml(s.name)}" aria-label="${escapeHtml(s.name)}">
-      ${SOCIAL_SVG[s.icon] || ""}
+      ${SOCIAL_SVG[s.icon] || SOCIAL_SVG.link}
     </a>`).join("");
   // Remplace les icones YouTube par la vraie photo de profil des chaines (async).
   youtubeChannels().then((list) => {
@@ -287,16 +291,23 @@ function renderSocials() {
 function initNotifToggle() {
   const btn = document.getElementById("notifToggle");
   const state = document.getElementById("notifState");
+  // Page ouverte hors de l'extension (ex. dans un onglet) : pas de reglage possible.
+  if (!platform.hasBrowser) {
+    btn.style.display = "none";
+    return;
+  }
   async function refresh() {
-    const d = await chrome.storage.local.get("notificationsEnabled");
-    const on = d.notificationsEnabled !== false;
-    state.textContent = on ? "ON" : "OFF";
-    btn.classList.toggle("off", !on);
+    try {
+      const on = await platform.getNotif();
+      state.textContent = on ? "ON" : "OFF";
+      btn.classList.toggle("off", !on);
+    } catch (_) {}
   }
   btn.addEventListener("click", async () => {
-    const d = await chrome.storage.local.get("notificationsEnabled");
-    const on = d.notificationsEnabled !== false;
-    await chrome.storage.local.set({ notificationsEnabled: !on });
+    try {
+      const on = await platform.getNotif();
+      await platform.setNotif(!on);
+    } catch (_) {}
     refresh();
   });
   refresh();
@@ -331,11 +342,34 @@ function applyLinks() {
   document.getElementById("patreonOpen").href = patreonSocial ? patreonSocial.url : "#";
 }
 
-// Recupere la config distante ; si elle a change, met a jour ce qui est deja affiche.
+// ---------- Bandeau "nouvelle version a installer" ----------
+// Rare : seulement quand ce qui tourne dans l'extension elle-meme doit changer
+// (voir extension.latestVersion dans server/lib/site-config.js).
+function cmpVersion(a, b) {
+  const pa = String(a).split(".").map(Number);
+  const pb = String(b).split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d < 0 ? -1 : 1;
+  }
+  return 0;
+}
+function renderUpdateBar() {
+  const bar = document.getElementById("updateBar");
+  const ext = CONFIG.extension || {};
+  const outdated = Boolean(EXT_VERSION && ext.latestVersion && cmpVersion(EXT_VERSION, ext.latestVersion) < 0);
+  bar.hidden = !outdated;
+  if (!outdated) return;
+  bar.innerHTML = `<span>✨ Nouvelle version ${escapeHtml(ext.latestVersion)} à installer</span>
+    <a href="${escapeHtml(ext.downloadUrl || "#")}" target="_blank">Mettre à jour ↗</a>`;
+}
+
+// Recharge la config ; si elle a change, met a jour ce qui est deja affiche.
 async function syncConfig(force) {
-  if (!(await refreshConfig(force))) return;
-  CONFIG = await getConfig();
+  if (!(await platform.refreshConfig(force))) return;
+  CONFIG = await platform.getConfig();
   applyLinks();
+  renderUpdateBar();
   renderSocials();
   if (loaded.videos) await renderVideos(force);
   if (loaded.planning) {
@@ -350,7 +384,7 @@ function initRefresh() {
   const btn = document.getElementById("refreshBtn");
   let busy = false;
   btn.addEventListener("click", async () => {
-    if (busy || !isConfigured()) return;
+    if (busy) return;
     busy = true;
     btn.classList.add("spin");
     const activeTab = document.querySelector(".tab.active");
@@ -365,7 +399,7 @@ function initRefresh() {
         w.dataset.loaded = ""; w.innerHTML = "";
         renderPlanning();
       }
-      chrome.runtime.sendMessage({ type: "poll-now" }).catch(() => {});
+      platform.pollNow();
     } finally {
       setTimeout(() => { btn.classList.remove("spin"); busy = false; }, 500);
     }
@@ -373,21 +407,16 @@ function initRefresh() {
 }
 
 (function init() {
+  announceReady(); // l'interface du serveur est la : pas besoin de la copie locale
   applyLinks();
+  renderUpdateBar();
   renderSocials();
   initTabs();
   initNotifToggle();
   initRefresh();
 
-  if (!isConfigured()) {
-    document.getElementById("liveContent").innerHTML =
-      `<div class="empty">⚙️ Le proxy n'est pas encore configuré.<br>
-       Renseigne <b>proxyBase</b> dans <code>config.js</code> après avoir déployé le dossier <b>/server</b>.</div>`;
-    return;
-  }
-
   loaded.live = true;
   renderLive();
   syncConfig();
-  chrome.runtime.sendMessage({ type: "poll-now" }).catch(() => {});
+  platform.pollNow();
 })();

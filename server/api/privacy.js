@@ -51,6 +51,8 @@ const HTML = `<!doctype html>
   <section>
     <h2>Ce que l'extension télécharge</h2>
     <ul>
+      <li>L'<b>interface</b> de l'extension elle-même, affichée depuis <code>extension-tvabdou.vercel.app</code>
+      (c'est ce qui lui permet de se mettre à jour sans réinstallation).</li>
       <li>Des informations <b>publiques</b> sur TVABDOU (statut du live, rediffusions, vidéos YouTube,
       titres des publications Patreon) depuis notre serveur <code>extension-tvabdou.vercel.app</code>.
       La requête ne contient aucune information sur toi.</li>

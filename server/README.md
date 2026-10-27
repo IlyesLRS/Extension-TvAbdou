@@ -3,6 +3,13 @@
 Petit backend serverless qui garde les clés API Twitch/YouTube **côté serveur**.
 L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
 
+## Interface de l'extension
+- `GET /popup/` → **l'interface de l'extension** (dossier [`public/popup/`](public/popup/),
+  servi tel quel grâce à `outputDirectory: "public"` dans [`vercel.json`](vercel.json)).
+  La fenêtre de l'extension l'affiche dans un cadre : la modifier puis redéployer la met à
+  jour pour tout le monde, sans réinstallation. Une copie du même dossier est embarquée dans
+  le zip de l'extension et prend le relais si le serveur ne répond pas.
+
 ## Endpoints
 - `GET /api/status` → `{ live, stream, vods, vod }` — statut live ; hors ligne, `vods`
   contient les **3 derniers lives passés et temps forts** (types Twitch `archive` et

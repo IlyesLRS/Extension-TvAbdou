@@ -89,6 +89,33 @@ chrome.notifications.onClicked.addListener(async (id) => {
   chrome.notifications.clear(id);
 });
 
+// ---------- Nouvelle version de l'extension ----------
+function cmpVersion(a, b) {
+  const pa = String(a).split(".").map(Number);
+  const pb = String(b).split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
+// Une seule notification par nouvelle version (le bandeau reste affiche dans la fenetre).
+async function checkExtensionUpdate(cfg) {
+  const ext = cfg.extension;
+  if (!ext || !ext.latestVersion) return;
+  if (cmpVersion(chrome.runtime.getManifest().version, ext.latestVersion) >= 0) return;
+  const { updateNotified } = await chrome.storage.local.get("updateNotified");
+  if (updateNotified === ext.latestVersion) return;
+  await chrome.storage.local.set({ updateNotified: ext.latestVersion });
+  await notify(
+    "update-" + ext.latestVersion,
+    "Nouvelle version de l'extension TVABDOU ✨",
+    "Clique pour installer la version " + ext.latestVersion + ".",
+    ext.downloadUrl || undefined
+  );
+}
+
 // ---------- Boucle ----------
 async function poll() {
   if (!isConfigured()) {
@@ -101,6 +128,9 @@ async function poll() {
   // Config distante (au plus une requete toutes les 15 min).
   if (await refreshConfig()) await schedule();
   const CONFIG = await getConfig();
+
+  // Nouvelle version de l'extension a installer (rare : l'interface, elle, se met a jour seule).
+  await checkExtensionUpdate(CONFIG).catch(() => {});
 
   // --- Live ---
   try {

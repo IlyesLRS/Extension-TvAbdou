@@ -1,8 +1,26 @@
 {
+  "outputDirectory": "public",
   "crons": [
-    { "path": "/api/cron/patreon", "schedule": "17 5 * * *" }
+    {
+      "path": "/api/cron/patreon",
+      "schedule": "17 5 * * *"
+    }
   ],
   "rewrites": [
-    { "source": "/confidentialite", "destination": "/api/privacy" }
+    {
+      "source": "/confidentialite",
+      "destination": "/api/privacy"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/popup/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
   ]
 }

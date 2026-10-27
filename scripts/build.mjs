@@ -1,5 +1,7 @@
-// Construit le zip a envoyer sur le Chrome Web Store : dist/Extension-TvAbdou-v<version>.zip
-// Usage : npm run build   (ou : node scripts/build.mjs)
+// Construit le zip de l'extension : dist/Extension-TvAbdou-v<version>.zip
+//   npm run build           -> zip a publier en release GitHub (installation "non empaquetee")
+//   npm run build -- --store -> variante sans le champ "key", pour une boutique
+//                               (Chrome Web Store / Edge Add-ons, qui refusent ce champ)
 // Aucune dependance : le zip est ecrit a la main (deflate de Node).
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative, sep } from "node:path";
@@ -8,8 +10,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(fileURLToPath(import.meta.url), "..", "..");
 
-// Fichiers de l'extension (le dossier server/, les docs et les scripts ne partent pas sur le Store).
-const INCLUDE = ["manifest.json", "background.js", "config.js", "popup.html", "popup.css", "popup.js", "lib", "icons"];
+const STORE = process.argv.includes("--store");
+
+// Fichiers de l'extension. Du dossier server/, seule la copie de secours de l'interface part
+// dans le zip (server/public/popup/) ; le reste du serveur, les docs et les scripts non.
+const INCLUDE = ["manifest.json", "background.js", "config.js", "popup.html", "shell.js", "shell.css", "lib", "icons", "server/public/popup"];
 
 function walk(p) {
   const abs = join(ROOT, p);
@@ -20,12 +25,15 @@ function walk(p) {
 // ---------- Verifications ----------
 const manifest = JSON.parse(readFileSync(join(ROOT, "manifest.json"), "utf8"));
 const errors = [];
-if ("key" in manifest) errors.push('le champ "key" est refuse par le Chrome Web Store');
+if (STORE) delete manifest.key; // refuse par les boutiques (elles attribuent leur propre identifiant)
 if (!/^\d+(\.\d+){0,3}$/.test(manifest.version || "")) errors.push("version invalide : " + manifest.version);
 if ((manifest.description || "").length > 132) errors.push("description > 132 caracteres");
 const referenced = [
   manifest.background && manifest.background.service_worker,
   manifest.action && manifest.action.default_popup,
+  "shell.js",
+  "server/public/popup/index.html",
+  "server/public/popup/popup.js",
   ...Object.values((manifest.action && manifest.action.default_icon) || {}),
   ...Object.values(manifest.icons || {})
 ].filter(Boolean);
@@ -60,7 +68,7 @@ const centrals = [];
 let offset = 0;
 
 for (const name of files) {
-  const data = readFileSync(join(ROOT, name));
+  const data = name === "manifest.json" ? Buffer.from(JSON.stringify(manifest, null, 2) + "\n") : readFileSync(join(ROOT, name));
   const comp = deflateRawSync(data, { level: 9 });
   const useDeflate = comp.length < data.length;
   const body = useDeflate ? comp : data;
@@ -109,6 +117,6 @@ end.writeUInt32LE(centralBuf.length, 12);
 end.writeUInt32LE(offset, 16);
 
 mkdirSync(join(ROOT, "dist"), { recursive: true });
-const out = join(ROOT, "dist", "Extension-TvAbdou-v" + manifest.version + ".zip");
+const out = join(ROOT, "dist", "Extension-TvAbdou-v" + manifest.version + (STORE ? "-store" : "") + ".zip");
 writeFileSync(out, Buffer.concat([...locals, centralBuf, end]));
 console.log("OK : " + relative(ROOT, out) + " (" + files.length + " fichiers)");

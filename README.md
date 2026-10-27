@@ -40,28 +40,31 @@ Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation (une seule fois)
 
-Installe l'extension depuis le **Chrome Web Store** (lien non répertorié :
-*à ajouter ici après la première publication*), puis clique **Ajouter à Chrome**.
-Ça marche aussi sur **Edge**.
+1. Télécharge `Extension-TvAbdou-vX.Y.Z.zip` dans la [dernière release](../../releases/latest)
+   et décompresse-le dans un **dossier que tu ne supprimeras pas** (ex. `Documents\TVABDOU`).
+2. Ouvre `chrome://extensions` (ou `edge://extensions`).
+3. Active le **Mode développeur** (en haut à droite).
+4. Clique **Charger l'extension non empaquetée** et sélectionne le dossier
+   (celui qui contient `manifest.json`).
 
 L'icône TVABDOU apparaît dans la barre d'outils. ✅
 
 ### 🔄 Mises à jour : automatiques
-Il n'y a **rien à faire** : Chrome vérifie les mises à jour du Web Store plusieurs fois
-par jour et les installe tout seul. Et les liens, réseaux et chaînes YouTube changent
-même **sans nouvelle version** : l'extension les récupère sur le serveur
-(voir *Personnalisation*).
+La fenêtre de l'extension affiche l'**interface servie par le serveur** : design, onglets,
+textes, liens, réseaux et chaînes YouTube se mettent à jour **pour tout le monde dès que le
+serveur est redéployé**, sans rien réinstaller.
 
-> **Tu avais installé une ancienne version en « non empaquetée » ?** Supprime-la dans
-> `chrome://extensions` après avoir installé celle du Store, sinon tu recevras chaque
-> notification en double.
+Seuls les changements de ce qui tourne *dans* l'extension (notifications, badge, permissions)
+demandent de réinstaller — c'est rare. Dans ce cas, l'extension affiche un **bandeau
+« Nouvelle version à installer »** et envoie une notification : il suffit de refaire
+l'installation ci-dessus **dans le même dossier** (remplacer les fichiers) puis de cliquer
+**↻ Recharger** sur la carte de l'extension. Le champ `key` du manifest fige l'identifiant :
+c'est la même extension, les réglages sont conservés.
 
-### 🧪 Tester une version en développement
-`chrome://extensions` → **Mode développeur** → **Charger l'extension non empaquetée** →
-choisis ce dossier (celui qui contient `manifest.json`), puis **↻ Recharger** après chaque
-modification.
+> Sans internet (ou si le serveur est en panne), l'extension affiche sa copie embarquée de
+> l'interface : rien ne casse.
 
 ---
 
@@ -71,16 +74,21 @@ modification.
 extension-tvAbdou/
 ├── manifest.json        Manifest MV3
 ├── background.js        Service worker : badge LIVE/OFF, notifications (live/YouTube x2/Patreon), polling
-├── popup.html/.css/.js  Interface (4 onglets + barre réseaux + bouton actualiser)
+├── popup.html           Fenêtre de l'extension = cadre qui affiche l'interface du serveur
+├── shell.js / .css      Pont avec l'interface (notifications…) + repli sur la copie embarquée
 ├── config.js            proxyBase + copie de secours de la config (liens, chaînes, planning)
 ├── lib/
 │   ├── api.js           Appels au proxy Vercel
 │   └── settings.js      Config effective : config distante du serveur, sinon config.js
 ├── icons/               Avatar + icônes d'état
-├── scripts/build.mjs    Construit le zip pour le Chrome Web Store (npm run build)
-├── store/               Fiche Chrome Web Store : textes, captures, vignette
+├── scripts/build.mjs    Construit le zip de release (npm run build)
+├── store/               Optionnel : fiche pour une boutique (Chrome Web Store / Edge Add-ons)
 └── server/              Proxy serverless Vercel (garde les clés API)
-    ├── vercel.json      Cron quotidien Patreon + adresse /confidentialite
+    ├── vercel.json      Dossier public/, cron quotidien Patreon, adresse /confidentialite
+    ├── public/popup/    ⭐ L'INTERFACE (servie sur /popup/, et copie embarquée dans le zip)
+    │   ├── index.html / popup.css / popup.js   Onglets, cartes, réseaux, bandeau de version
+    │   ├── platform.js  Mode serveur (pont vers l'extension) ou mode copie locale
+    │   └── api.js       Appels au serveur
     ├── lib/
     │   ├── site-config.js  ⭐ Liens, réseaux, chaînes YouTube (servis à l'extension)
     │   ├── twitch.js    Helper Twitch Helix
@@ -125,29 +133,36 @@ Voir [`server/README.md`](server/README.md) pour le détail. En résumé :
 
 ---
 
-## 🎨 Personnalisation (sans nouvelle version)
+## 🎨 Modifier l'extension (sans réinstallation)
 
-Les liens, réseaux, chaînes YouTube, le planning et la fréquence de vérification se
-changent dans [`server/lib/site-config.js`](server/lib/site-config.js). Après le
-redéploiement Vercel, **toutes les extensions installées les récupèrent toutes seules**
-(sous 15 minutes environ) : pas de nouvelle version à publier.
+| Pour changer… | Où | Effet |
+|---------------|----|-------|
+| Design, onglets, textes, icônes | [`server/public/popup/`](server/public/popup/) | dès le redéploiement |
+| Liens, réseaux, chaînes YouTube, planning | [`server/lib/site-config.js`](server/lib/site-config.js) | dès le redéploiement |
+| Notifications, badge, permissions | `background.js`, `shell.js`, `manifest.json` | nouvelle version à installer |
 
-- **Ajouter un réseau** : une ligne dans `socials` (icônes disponibles : twitch, youtube,
-  patreon, discord, instagram, tiktok, x, kick, threads, bluesky, link).
+- **Ajouter un réseau** : une ligne dans `socials` (icônes : twitch, youtube, patreon,
+  discord, instagram, tiktok, x, kick, threads, bluesky, link).
 - **Ajouter une chaîne YouTube** : une entrée dans `youtube` (avec une `key` nouvelle).
-  L'onglet Vidéos et les notifications la prennent en compte automatiquement.
 
 [`config.js`](config.js) ne sert plus que de copie de secours (et pour `proxyBase`).
-Une nouvelle version sur le Store n'est nécessaire que pour changer le code ou le design.
 
 ---
 
-## 📦 Publier une nouvelle version
+## 📦 Publier une nouvelle version (rare)
 
-Tout est détaillé dans [`store/fiche-chrome-web-store.md`](store/fiche-chrome-web-store.md).
-En résumé : augmente `version` dans `manifest.json`, lance `npm run build`, puis envoie
-`dist/Extension-TvAbdou-vX.Y.Z.zip` sur le tableau de bord du Chrome Web Store. Après la
-vérification de Google, tout le monde est mis à jour automatiquement.
+Seulement si `background.js`, `shell.js`, `lib/`, `config.js` ou `manifest.json` changent :
+
+1. Augmente `version` dans `manifest.json` (ex. `1.2.0` → `1.3.0`).
+2. `npm run build` → `dist/Extension-TvAbdou-v1.3.0.zip`.
+3. Crée une **release GitHub** avec ce zip.
+4. Mets le même numéro dans `extension.latestVersion` de
+   [`server/lib/site-config.js`](server/lib/site-config.js) et redéploie : tout le monde voit
+   le bandeau « Nouvelle version à installer » et reçoit une notification.
+
+*(Plus tard, si tu veux de vraies mises à jour automatiques complètes : une boutique —
+voir [`store/fiche-chrome-web-store.md`](store/fiche-chrome-web-store.md) et
+`npm run build -- --store`. Edge Add-ons est gratuit, le Chrome Web Store coûte 5 $.)*
 
 ---
 

@@ -2,11 +2,12 @@
 //
 // C'est ICI qu'on change les liens, les reseaux et les chaines YouTube.
 // Apres un redeploiement Vercel, toutes les extensions installees la recuperent
-// toutes seules (sous 15 minutes environ), sans nouvelle version sur le Chrome Web Store.
+// toutes seules (tout de suite dans la fenetre, sous 15 minutes pour les notifications),
+// sans reinstaller l'extension.
 //
 // Icones disponibles pour les reseaux : twitch, youtube, patreon, discord, instagram,
 // tiktok, x, kick, threads, bluesky, link (icone generique).
-// Pour une nouvelle icone, il faut en revanche une nouvelle version de l'extension.
+// Nouvelle icone : ajouter son SVG dans SOCIAL_SVG de server/public/popup/popup.js (sinon icone "link").
 export const SITE_CONFIG = {
   twitchLogin: "tvabdou",
 
@@ -34,5 +35,14 @@ export const SITE_CONFIG = {
   ],
 
   // Frequence de verification du live / des videos (minutes, 1 a 60).
-  pollMinutes: 1
+  pollMinutes: 1,
+
+  // Derniere version de l'extension elle-meme. L'interface (server/public/popup/) se met a jour
+  // toute seule ; une nouvelle version n'est a publier que si on change ce qui tourne dans
+  // l'extension (background.js, shell.js, manifest...). Dans ce cas : publier le zip en release
+  // GitHub PUIS mettre ici le nouveau numero -> bandeau dans la fenetre + une notification.
+  extension: {
+    latestVersion: "1.2.0",
+    downloadUrl: "https://github.com/IlyesLRS/Extension-TvAbdou/releases/latest"
+  }
 };

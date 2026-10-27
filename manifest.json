@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "TVABDOU - Live Tracker",
   "version": "1.2.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsJiEFhmkj9jUh05ATaqYmy8QfUD1nUZ9sCCDvMFaEgYAB++/trYzqgPCPt4I83qy4r+O+xi2EEwJjSFW2Aj5uoS6D+ltzvCD9Ngu04D5KdV2/nF35Ft+wa1kmGM56n10zrPHMfc96adlwxiSAfpiABY2+NapZD/STlEo6w24NbAE1JwfC69KoGJSowAqWzvsOh8oygttDyohVALRCZC/z4e+2tEK1Lfn3vOBafI/tMVRlX48M8nifrmaRwdxKIrJwdy9dDUK0vyPfUbyK6UosXlf4f6OCyZoguPc0IXzyjtRXsvqwdx3Yb9VElLZfowiOq5g8tpbvxEI3I9SZQzt1QIDAQAB",
   "description": "TVABDOU en un coup d'œil : live, derniers lives, planning, vidéos YouTube, Patreon et notifications.",
   "minimum_chrome_version": "110",
   "permissions": [
@@ -33,6 +34,6 @@
     "128": "icons/icon-128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; frame-src https://planning-live.vercel.app;"
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-src https://extension-tvabdou.vercel.app https://planning-live.vercel.app;"
   }
 }

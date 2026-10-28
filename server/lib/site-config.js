@@ -22,7 +22,8 @@ export const SITE_CONFIG = {
   // sinon une notification "nouvelle video" partirait en double).
   youtube: [
     { key: "main", name: "HDKABDOU", handle: "@hdkabdou", url: "https://www.youtube.com/@hdkabdou" },
-    { key: "second", name: "ABDOU MP4", handle: "@abdou_mp4", url: "https://www.youtube.com/@abdou_mp4" }
+    { key: "second", name: "ABDOU MP4", handle: "@abdou_mp4", url: "https://www.youtube.com/@abdou_mp4" },
+    { key: "react", name: "ABDOU EN REACT", handle: "@ABDOUENREACT", url: "https://www.youtube.com/@ABDOUENREACT" }
   ],
 
   // Barre de reseaux (8 maximum). ytKey : affiche la vraie photo de profil de cette chaine.
@@ -30,6 +31,7 @@ export const SITE_CONFIG = {
     { name: "Twitch", url: "https://twitch.tv/tvabdou", icon: "twitch" },
     { name: "YouTube — HDKABDOU", url: "https://www.youtube.com/@hdkabdou", icon: "youtube", ytKey: "main" },
     { name: "YouTube — ABDOU MP4", url: "https://www.youtube.com/@abdou_mp4", icon: "youtube", ytKey: "second" },
+    { name: "YouTube — ABDOU EN REACT", url: "https://www.youtube.com/@ABDOUENREACT", icon: "youtube", ytKey: "react" },
     { name: "Patreon", url: "https://www.patreon.com/c/TVABDOU", icon: "patreon" },
     { name: "Discord", url: "https://discord.com/invite/SuN3YSHjAC", icon: "discord" }
   ],

@@ -15,11 +15,12 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
   contient les **3 derniers lives passés et temps forts** (types Twitch `archive` et
   `highlight` ; les vidéos téléversées et les clips sont exclus). `vod` = `vods[0]`,
   conservé pour compatibilité avec les anciennes versions de l'extension.
-- `GET /api/videos?max=3&ch=main|second|all` → `{ videos: [...] }` — dernières vidéos
+- `GET /api/videos?max=3&ch=main|second|react|all` → `{ videos: [...] }` — dernières vidéos
   YouTube de la chaîne demandée (`main` = @hdkabdou, `second` = @abdou_mp4,
-  `all` = les deux fusionnées par date). Sans `ch`, c'est `main`.
+  `react` = @ABDOUENREACT, `all` = toutes fusionnées par date). Sans `ch`, c'est `main`.
+  Les chaînes se règlent dans [`lib/site-config.js`](lib/site-config.js).
 - `GET /api/channels` → `{ channels: [{ key, handle, title, avatar, url }] }` —
-  nom et photo de profil des deux chaînes YouTube (utilisé par la barre de réseaux).
+  nom et photo de profil des chaînes YouTube (utilisé par la barre de réseaux).
 - `GET /api/patreon` → `{ configured, posts: [...] }` (3 dernières publications Patreon).
   Si le jeton est absent, expiré ou révoqué : `{ configured: false, reason: "auth" }`
   (jamais d'erreur brute — l'onglet affiche la marche à suivre).
@@ -83,6 +84,7 @@ Sans `SUPABASE_URL` / `SUPABASE_SECRET_KEY`, le proxy retombe sur l'ancien fonct
    | `YOUTUBE_CHANNEL_ID` | `UC...` — chaîne 1 *(optionnel, prioritaire sur le handle)* |
    | `YOUTUBE_HANDLE_2` | `@abdou_mp4` — chaîne 2 *(optionnel)* |
    | `YOUTUBE_CHANNEL_ID_2` | `UC...` — chaîne 2 *(optionnel, prioritaire sur le handle)* |
+   | `YOUTUBE_HANDLE_3` / `YOUTUBE_CHANNEL_ID_3` | chaîne 3 (@ABDOUENREACT) *(optionnels)* |
    | `PATREON_ACCESS_TOKEN` | Creator's Access Token *(facultatif si les 3 lignes suivantes sont remplies)* |
    | `PATREON_CLIENT_ID` | Client ID Patreon *(renouvellement auto)* |
    | `PATREON_CLIENT_SECRET` | Client Secret Patreon *(renouvellement auto)* |

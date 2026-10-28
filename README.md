@@ -5,7 +5,7 @@
 **Extension navigateur (Chrome / Edge) pour suivre [TVABDOU](https://twitch.tv/tvabdou) en un coup d'œil.**
 
 Sais si le stream est en live, affiche les derniers lives et temps forts, le planning,
-les dernières vidéos des **2 chaînes YouTube** et les dernières publications Patreon —
+les dernières vidéos des **3 chaînes YouTube** et les dernières publications Patreon —
 avec notifications.
 
 Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
@@ -24,12 +24,13 @@ Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
     Les clips et les vidéos téléversées sont exclus.
 - 📅 **Onglet Planning** : le planning [planning-live.vercel.app](https://planning-live.vercel.app/) intégré.
 - ▶️ **Onglet Vidéos** : les **3 dernières vidéos de chaque chaîne YouTube** —
-  [@hdkabdou](https://www.youtube.com/@hdkabdou) et
-  [@abdou_mp4](https://www.youtube.com/@abdou_mp4) — en deux sections.
+  [@hdkabdou](https://www.youtube.com/@hdkabdou),
+  [@abdou_mp4](https://www.youtube.com/@abdou_mp4) et
+  [@ABDOUENREACT](https://www.youtube.com/@ABDOUENREACT) — une section par chaîne.
 - Ⓟ **Onglet Patreon** : les **3 dernières publications Patreon**.
-- 🔗 **Réseaux** (Twitch, les 2 chaînes YouTube avec leur vraie photo de profil,
+- 🔗 **Réseaux** (Twitch, les 3 chaînes YouTube avec leur vraie photo de profil,
   Patreon, Discord) accessibles sur chaque onglet.
-- 🔔 **Notifications** au passage en live, à chaque nouvelle vidéo sur **l'une des deux
+- 🔔 **Notifications** au passage en live, à chaque nouvelle vidéo sur **l'une des
   chaînes YouTube** (le nom de la chaîne est indiqué) et à chaque nouvelle publication
   Patreon, avec un bouton pour les activer / couper.
 - ↻ **Bouton Actualiser** pour recharger les données à la demande (sans cache).

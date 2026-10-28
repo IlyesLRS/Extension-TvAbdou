@@ -47,3 +47,9 @@ export async function getYoutubeChannels(bust) {
 export function getPatreonPosts(bust) {
   return get("/api/patreon", bust); // { configured, posts }
 }
+
+// Les 7 prochains jours du planning de stream (aujourd'hui en premier).
+export async function getPlanning(bust) {
+  const d = await get("/api/planning", bust);
+  return (d && d.days) || [];
+}

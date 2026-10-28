@@ -11,8 +11,10 @@
 export const SITE_CONFIG = {
   twitchLogin: "tvabdou",
 
-  // Planning integre en iframe. Le domaine doit rester planning-live.vercel.app
-  // (seul domaine autorise par le manifest de l'extension).
+  // Site du planning. L'onglet Planning affiche la liste des 7 prochains jours lue sur son
+  // API (/api/planning, voir lib/planning.js) ; « Ouvrir en grand » ouvre ce lien.
+  // Si l'API ne repond pas, l'onglet affiche ce site dans un cadre : le domaine doit donc
+  // rester planning-live.vercel.app (seul domaine de cadre autorise par le manifest).
   planningUrl: "https://planning-live.vercel.app/",
 
   // Chaines YouTube : onglet Videos + notifications.

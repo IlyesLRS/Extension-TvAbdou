@@ -26,7 +26,9 @@ Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
   - En live : miniature, titre, nombre de viewers et **durée du stream**.
   - Hors ligne : les **3 derniers lives passés et temps forts** (date, durée, vues).
     Les clips et les vidéos téléversées sont exclus.
-- 📅 **Onglet Planning** : le planning [planning-live.vercel.app](https://planning-live.vercel.app/) intégré.
+- 📅 **Onglet Planning** : les **7 prochains jours** du planning
+  [planning-live.vercel.app](https://planning-live.vercel.app/), aujourd'hui en haut (affiches et
+  heures des lives, jours off). Mis à jour tout seul quand le planning est modifié dans son éditeur.
 - ▶️ **Onglet Vidéos** : les **3 dernières vidéos de chaque chaîne YouTube** —
   [@hdkabdou](https://www.youtube.com/@hdkabdou),
   [@abdou_mp4](https://www.youtube.com/@abdou_mp4) et
@@ -100,6 +102,7 @@ extension-tvAbdou/
     │   ├── youtube.js   Helper YouTube (multi-chaînes)
     │   ├── patreon.js   Jeton Patreon + renouvellement automatique
     │   ├── store.js     Stockage du jeton Patreon dans Supabase
+    │   ├── planning.js  Lecture du planning (7 jours, bascule à 6 h)
     │   └── alert.js     Alerte Discord si Patreon casse
     └── api/
         ├── config.js    Config publique de l'extension
@@ -107,6 +110,7 @@ extension-tvAbdou/
         ├── videos.js    3 dernières vidéos par chaîne (YouTube Data API)
         ├── channels.js  Nom + photo de profil des chaînes YouTube
         ├── patreon.js   3 dernières publications (Patreon API)
+        ├── planning.js  7 prochains jours du planning (relais de planning-live)
         ├── privacy.js   Politique de confidentialité (/confidentialite)
         └── cron/patreon.js  Renouvellement + vérification Patreon, 1 fois par jour
 ```

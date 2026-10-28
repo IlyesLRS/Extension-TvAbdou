@@ -3,7 +3,7 @@
 // la modifier ici puis redeployer suffit, sans reinstaller l'extension.
 // Une copie embarquee prend le relais si le serveur ne repond pas (voir platform.js).
 import { platform, announceReady, requestFallback, EXT_VERSION } from "./platform.js";
-import { setBase, getStatus, getLatestVideos, getPatreonPosts, getYoutubeChannels, vodsOf } from "./api.js";
+import { setBase, getStatus, getLatestVideos, getPatreonPosts, getYoutubeChannels, getPlanning, vodsOf } from "./api.js";
 
 let CONFIG;
 try {
@@ -209,13 +209,77 @@ async function renderLive(bust) {
   }
 }
 
-// ---------- Planning (iframe) ----------
-function renderPlanning() {
-  const wrap = document.getElementById("planningWrap");
-  if (wrap.dataset.loaded) return;
-  wrap.dataset.loaded = "1";
-  wrap.innerHTML = `<iframe src="${CONFIG.planningUrl}" loading="lazy" referrerpolicy="no-referrer"
+// ---------- Planning (les 7 prochains jours, aujourd'hui en haut) ----------
+// Les donnees viennent du site du planning via /api/planning : ce qui est change dans
+// l'editeur du planning apparait ici tout seul. Si le serveur ne repond pas, on affiche
+// la page du planning dans un cadre, comme avant.
+const CALENDAR_SVG = '<svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 2a1 1 0 00-1 1v1H5a2 2 0 00-2 2v13a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H8V3a1 1 0 00-1-1zm12 7v10H5V9h14z"/></svg>';
+
+// "19H30" -> "19h30", "21H" -> "21h" ; un autre texte ("INSH'ALLAH") est affiche en petit.
+function sessionTime(t) {
+  const s = String(t || "").trim();
+  const m = /^(\d{1,2})\s*[hH:]\s*(\d{2})?$/.exec(s);
+  if (m) return { text: Number(m[1]) + "h" + (m[2] || ""), maybe: false };
+  return { text: s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "", maybe: true };
+}
+
+function restLabel(r) {
+  const s = String(r || "").trim();
+  if (/^day\s*-?\s*off$/i.test(s)) return "😴 Day off";
+  if (/^(off|repos)$/i.test(s)) return "😴 Repos";
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function planningSession(s) {
+  const t = sessionTime(s.time);
+  const img = s.image
+    ? `<img src="${escapeHtml(s.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="object-position:${escapeHtml(s.pos || "50% 50%")}">`
+    : `<div class="pl-ph">${CALENDAR_SVG}</div>`;
+  return `<div class="pl-s">${img}${t.text ? `<span class="pl-time${t.maybe ? " maybe" : ""}">${escapeHtml(t.text)}</span>` : ""}</div>`;
+}
+
+function planningDay(d, i, days) {
+  const label = !d.today && i === 1 && days[0].today ? "Demain" : d.day;
+  const body = d.sessions.length
+    ? `<div class="pl-ss">${d.sessions.map(planningSession).join("")}</div>`
+    : d.rest
+      ? `<span class="pl-rest">${escapeHtml(restLabel(d.rest))}</span>`
+      : `<span class="pl-empty">Pas encore programmé</span>`;
+  return `<div class="pl-day${d.today ? " today" : ""}">
+    <div class="pl-date">
+      <small>${escapeHtml(label)}</small>
+      <strong>${escapeHtml(d.date)}</strong>
+      ${d.today ? `<span class="pl-chip">Aujourd'hui</span>` : ""}
+    </div>
+    ${body}
+  </div>`;
+}
+
+function planningFrame(wrap) {
+  wrap.className = "frame-wrap";
+  wrap.innerHTML = `<iframe src="${escapeHtml(CONFIG.planningUrl)}" loading="lazy" referrerpolicy="no-referrer"
     sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox"></iframe>`;
+}
+
+async function renderPlanning(bust) {
+  const wrap = document.getElementById("planningWrap");
+  try {
+    const days = await getPlanning(bust);
+    if (!days.length) throw new Error("planning vide");
+    wrap.className = "pl-list";
+    wrap.innerHTML = days.map(planningDay).join("");
+    // Affiche introuvable : pastille a la place (pas de gestionnaire en ligne, interdit dans l'extension).
+    wrap.querySelectorAll(".pl-s img").forEach((img) =>
+      img.addEventListener("error", () => {
+        const ph = document.createElement("div");
+        ph.className = "pl-ph";
+        ph.innerHTML = CALENDAR_SVG;
+        img.replaceWith(ph);
+      }, { once: true })
+    );
+  } catch (_) {
+    planningFrame(wrap);
+  }
 }
 
 // ---------- Patreon (3 dernieres publications) ----------
@@ -406,11 +470,7 @@ async function syncConfig(force) {
   renderUpdateBar();
   renderSocials();
   if (loaded.videos) await renderVideos(force);
-  if (loaded.planning) {
-    const w = document.getElementById("planningWrap");
-    w.dataset.loaded = ""; w.innerHTML = "";
-    renderPlanning();
-  }
+  if (loaded.planning) await renderPlanning(force);
 }
 
 // ---------- Bouton Actualiser (force le rechargement, sans cache) ----------
@@ -428,11 +488,7 @@ function initRefresh() {
       await renderLive(true); // met a jour la pastille de statut + l'onglet Live
       if (active === "videos") await renderVideos(true);
       else if (active === "patreon") await renderPatreon(true);
-      else if (active === "planning") {
-        const w = document.getElementById("planningWrap");
-        w.dataset.loaded = ""; w.innerHTML = "";
-        renderPlanning();
-      }
+      else if (active === "planning") await renderPlanning(true);
       platform.pollNow();
     } finally {
       setTimeout(() => { btn.classList.remove("spin"); busy = false; }, 500);

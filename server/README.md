@@ -34,6 +34,12 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
   Les chaînes se règlent dans [`lib/site-config.js`](lib/site-config.js).
 - `GET /api/channels` → `{ channels: [{ key, handle, title, avatar, url }] }` —
   nom et photo de profil des chaînes YouTube (utilisé par la barre de réseaux).
+- `GET /api/planning` → `{ days: [{ iso, day, date, today, sessions: [{ image, time, pos }], rest }] }` —
+  les **7 prochains jours** du planning (aujourd'hui en premier, la journée bascule à 6 h, heure de
+  Paris, comme sur le site). Relais de l'API publique de `planning-live.vercel.app` (qui n'accepte
+  pas les appels d'autres sites), gardé 1 min ; `?_=` (bouton Actualiser) relit tout de suite.
+  Si ce site est en panne, la dernière version connue est renvoyée ; sinon `502` et l'onglet
+  affiche le site du planning dans un cadre. Code : [`lib/planning.js`](lib/planning.js).
 - `GET /api/patreon` → `{ configured, posts: [...] }` (3 dernières publications Patreon).
   Si le jeton est absent, expiré ou révoqué : `{ configured: false, reason: "auth" }`
   (jamais d'erreur brute — l'onglet affiche la marche à suivre).

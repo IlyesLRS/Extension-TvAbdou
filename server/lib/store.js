@@ -5,11 +5,25 @@
 // Variables d'env :
 //   SUPABASE_URL          - ex. https://xxxx.supabase.co
 //   SUPABASE_SECRET_KEY   - cle secrete "sb_secret_..." (ou l'ancienne cle service_role)
-const BASE = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
-const KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+// .trim() : un espace ou un retour a la ligne colle avec la valeur suffit a tout casser.
+const BASE = (process.env.SUPABASE_URL || "").trim().replace(/\/+$/, "");
+const KEY = (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 const TABLE = "ext_patreon_token";
 
 export const storeEnabled = Boolean(BASE && KEY);
+// SUPABASE_URL est renseignee mais pas la cle : on veut le stockage, il est mal configure.
+export const storeMisconfigured = Boolean(BASE) && !KEY;
+
+// Nature de la cle (jamais sa valeur), pour la page d'etat.
+export const keyKind = !KEY
+  ? "absente ou vide"
+  : KEY.startsWith("sb_secret_")
+    ? "cle secrete (sb_secret_)"
+    : KEY.startsWith("sb_publishable_")
+      ? "ERREUR : cle publique (sb_publishable_) au lieu de la cle secrete"
+      : KEY.split(".").length === 3
+        ? "ancienne cle (JWT)"
+        : "format inconnu";
 
 function headers(extra) {
   const h = { apikey: KEY, "Content-Type": "application/json", ...extra };

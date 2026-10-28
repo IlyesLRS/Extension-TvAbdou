@@ -1,14 +1,16 @@
 // GET /api/cron/patreon - lance une fois par jour par le cron Vercel (voir vercel.json).
 // Renouvelle le jeton Patreon bien avant son expiration, verifie l'acces et alerte sur Discord
 // si ca ne marche pas.
-// Sans l'en-tete du cron (quand CRON_SECRET est defini), renvoie seulement l'etat, sans rien toucher :
-// pratique pour verifier depuis un navigateur. Aucun jeton n'est jamais renvoye.
+// Ouvert dans un navigateur, renvoie seulement l'etat, sans rien toucher (aucun jeton n'est renvoye).
+// Le cron Vercel est reconnu a son en-tete Authorization (si CRON_SECRET est defini) ou, a defaut,
+// a son user-agent "vercel-cron".
 import { maintenance, tokenStatus } from "../../lib/patreon.js";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  const secret = process.env.CRON_SECRET;
-  const fromCron = !secret || (req.headers && req.headers.authorization) === "Bearer " + secret;
+  const secret = (process.env.CRON_SECRET || "").trim();
+  const h = req.headers || {};
+  const fromCron = secret ? h.authorization === "Bearer " + secret : /vercel-cron/i.test(h["user-agent"] || "");
 
   if (!fromCron) {
     return res.status(200).json({ mode: "lecture", ...(await tokenStatus()) });

@@ -12,13 +12,15 @@
 //   PATREON_ACCESS_TOKEN / PATREON_REFRESH_TOKEN - jetons de depart. S'ils changent dans
 //     Vercel (jetons neufs colles a la main), ils remplacent automatiquement ceux du stockage.
 import { createHash } from "node:crypto";
-import { storeEnabled, readRow, updateRow, tryLock } from "./store.js";
+import { storeEnabled, storeMisconfigured, keyKind, readRow, updateRow, tryLock } from "./store.js";
 import { alertEnabled, sendAlert } from "./alert.js";
 
-const CLIENT_ID = process.env.PATREON_CLIENT_ID || "";
-const CLIENT_SECRET = process.env.PATREON_CLIENT_SECRET || "";
-const ENV_ACCESS = process.env.PATREON_ACCESS_TOKEN || null;
-const ENV_REFRESH = process.env.PATREON_REFRESH_TOKEN || null;
+// .trim() : un espace ou un retour a la ligne colle avec un jeton le rend invalide.
+const env = (k) => (process.env[k] || "").trim();
+const CLIENT_ID = env("PATREON_CLIENT_ID");
+const CLIENT_SECRET = env("PATREON_CLIENT_SECRET");
+const ENV_ACCESS = env("PATREON_ACCESS_TOKEN") || null;
+const ENV_REFRESH = env("PATREON_REFRESH_TOKEN") || null;
 
 const TOKEN_URL = "https://www.patreon.com/api/oauth2/token";
 export const API = "https://www.patreon.com/api/oauth2/v2";
@@ -42,6 +44,7 @@ let session = null; // { access, refresh, exp (ms, 0 = inconnue), version, alert
 let loading = null;
 let refreshing = null;
 let memAlertedAt = 0;
+let lastFailure = null; // { message, at } : derniere erreur vue par cette instance (page d'etat)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const nowIso = () => new Date().toISOString();
@@ -169,6 +172,11 @@ async function saveTokens(row, t) {
 }
 
 async function doRefresh() {
+  if (storeMisconfigured) {
+    // Sans stockage, le nouveau jeton serait perdu au prochain redemarrage et celui de Vercel
+    // serait deja consomme : on ne grille pas le jeton tant que Supabase n'est pas branche.
+    throw authError("Stockage Supabase mal configuré (SUPABASE_SECRET_KEY " + keyKind + ") : renouvellement bloqué pour ne pas griller le jeton");
+  }
   if (!storeEnabled) {
     const s = await load();
     const t = await callTokenEndpoint(s.refresh);
@@ -232,6 +240,7 @@ function refreshTokens() {
 
 // ---------- Alertes ----------
 async function reportFailure(err) {
+  lastFailure = { message: err.message, at: nowIso() };
   if (!alertEnabled) return;
   try {
     if (storeEnabled) {
@@ -337,9 +346,17 @@ export async function maintenance() {
   return out;
 }
 
-// Etat lisible sans secret (aucun jeton renvoye).
+// Etat lisible sans secret (aucun jeton renvoye) : uniquement des oui/non, dates et messages d'erreur.
 export async function tokenStatus() {
-  const out = { store: storeEnabled, alerts: alertEnabled, canRefresh: canRefresh() };
+  const out = {
+    store: storeEnabled,
+    storeKey: keyKind,
+    alerts: alertEnabled,
+    canRefresh: canRefresh(),
+    vercelHasAccessToken: Boolean(ENV_ACCESS),
+    vercelHasRefreshToken: Boolean(ENV_REFRESH),
+    lastFailureHere: lastFailure
+  };
   try {
     if (storeEnabled) {
       const row = await readRow();

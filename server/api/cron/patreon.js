@@ -4,7 +4,7 @@
 // Ouvert dans un navigateur, renvoie seulement l'etat, sans rien toucher (aucun jeton n'est renvoye).
 // Le cron Vercel est reconnu a son en-tete Authorization (si CRON_SECRET est defini) ou, a defaut,
 // a son user-agent "vercel-cron".
-import { maintenance, tokenStatus } from "../../lib/patreon.js";
+import { maintenance, tokenStatus, checkTokens } from "../../lib/patreon.js";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -13,7 +13,10 @@ export default async function handler(req, res) {
   const fromCron = secret ? h.authorization === "Bearer " + secret : /vercel-cron/i.test(h["user-agent"] || "");
 
   if (!fromCron) {
-    return res.status(200).json({ mode: "lecture", ...(await tokenStatus()) });
+    const out = { mode: "lecture", ...(await tokenStatus()) };
+    // ?verifier=1 : teste les jetons sur l'API Patreon, sans rien consommer.
+    if (req.query && req.query.verifier) Object.assign(out, await checkTokens());
+    return res.status(200).json(out);
   }
   const out = await maintenance();
   return res.status(out.ok ? 200 : 500).json({ mode: "maintenance", ...out });

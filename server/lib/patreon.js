@@ -346,6 +346,43 @@ export async function maintenance() {
   return out;
 }
 
+// Verification sans effet de bord : essaie chaque jeton comme jeton d'acces sur l'API Patreon
+// (rien n'est consomme). Sert a reperer un jeton invalide ou deux jetons inverses.
+let lastCheck = 0;
+async function bearerWorks(token) {
+  if (!token) return null;
+  try {
+    const r = await fetch(API + "/campaigns", {
+      headers: { Authorization: "Bearer " + token },
+      signal: AbortSignal.timeout(8000)
+    });
+    return r.status === 200 ? true : r.status === 401 || r.status === 403 ? false : "HTTP " + r.status;
+  } catch (e) {
+    return "erreur reseau";
+  }
+}
+
+export async function checkTokens() {
+  if (Date.now() - lastCheck < 30000) return { check: "deja fait il y a moins de 30 s" };
+  lastCheck = Date.now();
+  let access = ENV_ACCESS;
+  let refresh = ENV_REFRESH;
+  if (storeEnabled) {
+    try {
+      const row = await readRow();
+      access = row.access_token || access;
+      refresh = row.refresh_token || refresh;
+    } catch (_) {}
+  }
+  const accessOk = await bearerWorks(access);
+  const refreshUsedAsAccess = await bearerWorks(refresh);
+  let verdict;
+  if (accessOk === true) verdict = "jeton d'acces valide";
+  else if (refreshUsedAsAccess === true) verdict = "JETONS INVERSES : la valeur du Refresh Token est un jeton d'acces";
+  else verdict = "jeton d'acces refuse par Patreon (et le refresh token n'en est pas un)";
+  return { accessTokenWorks: accessOk, refreshTokenWorksAsAccess: refreshUsedAsAccess, verdict };
+}
+
 // Etat lisible sans secret (aucun jeton renvoye) : uniquement des oui/non, dates et messages d'erreur.
 export async function tokenStatus() {
   const out = {

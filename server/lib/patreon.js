@@ -30,9 +30,8 @@ const SOON = 2 * DAY; // pendant une requete : on renouvelle si le jeton expire 
 const CRON_MARGIN = 10 * DAY; // cron quotidien : on renouvelle des qu'il reste moins de 10 jours
 const ALERT_EVERY = 12 * 3600000; // une alerte Discord au plus toutes les 12 h
 const FIX_HELP =
-  "Pour réparer : sur https://www.patreon.com/portal/registration/register-clients (compte créateur), " +
-  "copie le Creator's Access Token et le Creator's Refresh Token, colle-les dans PATREON_ACCESS_TOKEN et " +
-  "PATREON_REFRESH_TOKEN sur Vercel, puis redéploie. Le serveur les reprend tout seul.";
+  "Pour réparer : ouvre https://extension-tvabdou.vercel.app/connecter-patreon avec le compte créateur " +
+  "TVABDOU et clique « Autoriser ». Le serveur récupère et range les nouveaux jetons tout seul.";
 
 // Empreinte des jetons poses dans Vercel : si elle change, des jetons neufs ont ete colles.
 const SEED =
@@ -410,3 +409,91 @@ export async function tokenStatus() {
   }
   return out;
 }
+
+// ---------- Connexion OAuth (« Connecter Patreon ») ----------
+// Le createur autorise l'application sur Patreon ; le serveur echange le code contre des jetons
+// et les range dans Supabase. Plus aucun jeton a copier a la main.
+const AUTHORIZE_URL = "https://www.patreon.com/oauth2/authorize";
+export const REDIRECT_URI =
+  env("PATREON_REDIRECT_URI") || "https://extension-tvabdou.vercel.app/api/patreon-callback";
+const SCOPES = "identity campaigns campaigns.posts";
+
+export function authorizeUrl(state) {
+  if (!CLIENT_ID) throw new Error("PATREON_CLIENT_ID manquant sur Vercel");
+  const q = new URLSearchParams({
+    response_type: "code",
+    client_id: CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    scope: SCOPES,
+    state
+  });
+  return AUTHORIZE_URL + "?" + q.toString();
+}
+
+// Echange le code, verifie que le compte possede bien la campagne attendue, puis enregistre.
+// expectedVanity : nom de la campagne (ex. "TVABDOU", celui de patreon.com/c/TVABDOU).
+export async function connectWithCode(code, expectedVanity) {
+  if (!canRefresh()) throw new Error("PATREON_CLIENT_ID / PATREON_CLIENT_SECRET manquants sur Vercel");
+  if (!storeEnabled) throw new Error("Stockage Supabase non configuré (SUPABASE_URL / SUPABASE_SECRET_KEY)");
+
+  const r = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      code: String(code),
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      redirect_uri: REDIRECT_URI
+    }),
+    signal: AbortSignal.timeout(10000)
+  });
+  if (!r.ok) {
+    let detail = "";
+    try {
+      const j = await r.json();
+      if (j && j.error) detail = " (" + j.error + ")";
+    } catch (_) {}
+    throw new Error("Patreon a refusé la connexion : " + r.status + detail);
+  }
+  const j = await r.json();
+  if (!j.access_token || !j.refresh_token) throw new Error("Patreon n'a pas renvoyé de jetons");
+
+  // Securite : seul le compte qui possede la campagne attendue peut se connecter.
+  const c = await fetch(API + "/campaigns?fields%5Bcampaign%5D=vanity,creation_name,url", {
+    headers: { Authorization: "Bearer " + j.access_token },
+    signal: AbortSignal.timeout(10000)
+  });
+  if (!c.ok) throw new Error("Impossible de lire la campagne avec ce compte (" + c.status + ")");
+  const camp = await c.json();
+  const want = String(expectedVanity || "").toLowerCase();
+  const match = (camp.data || []).find((d) => {
+    const a = d.attributes || {};
+    const vanity = String(a.vanity || "").toLowerCase();
+    const url = String(a.url || "").toLowerCase().replace(/\/+$/, "");
+    return want && (vanity === want || url.endsWith("/" + want) || url.endsWith("/c/" + want));
+  });
+  if (!match) {
+    throw new Error(
+      "Ce compte Patreon ne possède pas la campagne « " + expectedVanity + " ». " +
+        "Connecte-toi avec le compte créateur TVABDOU puis recommence."
+    );
+  }
+
+  const row = await readRow();
+  const t = {
+    access: j.access_token,
+    refresh: j.refresh_token,
+    exp: Date.now() + (Number(j.expires_in) || 31 * 86400) * 1000
+  };
+  const saved = await saveTokens(row, t);
+  // Garde l'empreinte des jetons de Vercel : ils ne viendront pas ecraser ceux-ci.
+  if (SEED && saved.seed_hash !== SEED) await updateRow({ seed_hash: SEED }).catch(() => {});
+  const wasAlerted = Boolean(row.alerted_at);
+  session = fromRow(saved);
+  lastFailure = null;
+  if (wasAlerted) await sendAlert("✅ **Patreon : accès rétabli** pour l'extension TvAbdou (reconnexion).");
+  const a = match.attributes || {};
+  return { campaign: a.creation_name || a.vanity || expectedVanity, expiresAt: new Date(t.exp).toISOString() };
+}
+

@@ -48,10 +48,19 @@ du projet Supabase **reseaux-tvabdou** (accès réservé à la clé secrète) :
 - si l'accès casse quand même (accès révoqué sur Patreon…), une alerte part sur Discord
   (au plus une toutes les 12 h), puis un message « rétabli » quand ça remarche.
 
-**Réparer à la main (rare) :** sur la page du client Patreon (voir *Où trouver les clés*),
-clique pour régénérer les jetons, copie le *Creator's Access Token* et le *Creator's Refresh
-Token* dans `PATREON_ACCESS_TOKEN` et `PATREON_REFRESH_TOKEN` sur Vercel, puis
-**redéploie**. Le serveur voit que les jetons de Vercel ont changé et les reprend tout seul.
+**Connecter / reconnecter Patreon (aucun jeton à copier) :** ouvre
+**https://extension-tvabdou.vercel.app/connecter-patreon** avec le compte créateur TVABDOU et
+clique « Autoriser ». Le serveur échange l'autorisation contre des jetons et les range dans
+Supabase. Il refuse tout compte qui ne possède pas la campagne TVABDOU.
+Prérequis (une fois) : dans le client du portail Patreon, la liste **Redirect URIs** doit contenir
+`https://extension-tvabdou.vercel.app/api/patreon-callback`.
+
+**État (sans aucun secret) :** https://extension-tvabdou.vercel.app/api/cron/patreon
+(ajoute `?verifier=1` pour tester les jetons sur Patreon sans les consommer).
+
+*Ancienne méthode, toujours possible :* coller le *Creator's Access Token* et le *Creator's
+Refresh Token* dans `PATREON_ACCESS_TOKEN` / `PATREON_REFRESH_TOKEN` sur Vercel puis redéployer :
+le serveur voit que les jetons de Vercel ont changé et les reprend.
 
 Sans `SUPABASE_URL` / `SUPABASE_SECRET_KEY`, le proxy retombe sur l'ancien fonctionnement
 (mémoire seule).

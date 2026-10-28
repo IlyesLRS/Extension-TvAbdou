@@ -10,6 +10,10 @@
     {
       "source": "/confidentialite",
       "destination": "/api/privacy"
+    },
+    {
+      "source": "/connecter-patreon",
+      "destination": "/api/patreon-connect"
     }
   ],
   "headers": [

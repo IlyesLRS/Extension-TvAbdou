@@ -132,31 +132,65 @@ function vodItem(v) {
     </a>`;
 }
 
+// Cartes "en live" : Twitch (miniature du stream) ou autre plateforme (Patreon...).
+const LIVE_NAME = { twitch: "Twitch", patreon: "Patreon" };
+const LIVE_ICON = { patreon: SOCIAL_SVG.patreon, twitch: SOCIAL_SVG.twitch };
+
+function twitchLiveCard(s) {
+  const url = "https://twitch.tv/" + CONFIG.twitchLogin;
+  return `
+    <div class="stream-card">
+      <a class="thumb-wrap" href="${url}" target="_blank">
+        ${s.thumbnail ? `<img src="${escapeHtml(s.thumbnail)}?_=${Date.now()}" alt="">` : ""}
+        <span class="badge-live"><span class="dot"></span>LIVE</span>
+        ${s.startedAt ? `<span class="badge-time">⏱ ${uptime(s.startedAt)}</span>` : ""}
+      </a>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(s.title || "")}</div>
+        <div class="meta-row">
+          ${s.viewers !== undefined ? `<span class="chip mint">👁 <b>${fmtNumber(s.viewers)}</b> viewers</span>` : ""}
+          ${s.game ? `<span class="chip">🎮 ${escapeHtml(s.game)}</span>` : ""}
+        </div>
+        <a class="watch-btn" href="${url}" target="_blank">Regarder le live</a>
+      </div>
+    </div>`;
+}
+
+function otherLiveCard(l) {
+  const name = l.platformName || LIVE_NAME[l.platform] || l.platform;
+  const url = /^https:\/\//.test(l.url || "") ? l.url : "#";
+  return `
+    <div class="stream-card">
+      <a class="thumb-wrap live-art" href="${escapeHtml(url)}" target="_blank">
+        <span class="live-art-icon">${LIVE_ICON[l.platform] || SOCIAL_SVG.link}</span>
+        <span class="badge-live"><span class="dot"></span>LIVE</span>
+        ${l.startedAt ? `<span class="badge-time">⏱ ${uptime(l.startedAt)}</span>` : ""}
+      </a>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(l.title || "Live sur " + name)}</div>
+        <div class="meta-row"><span class="chip mint">🔴 En direct sur <b>${escapeHtml(name)}</b></span></div>
+        <a class="watch-btn" href="${escapeHtml(url)}" target="_blank">Rejoindre le live sur ${escapeHtml(name)}</a>
+      </div>
+    </div>`;
+}
+
+function livesOf(d) {
+  if (d && Array.isArray(d.lives)) return d.lives.filter((l) => l && l.platform);
+  return d && d.live && d.stream ? [{ platform: "twitch", ...d.stream }] : [];
+}
+
 async function renderLive(bust) {
   const el = document.getElementById("liveContent");
   const pill = document.getElementById("statusPill");
   try {
     const d = await getStatus(bust);
-    if (d.live && d.stream) {
-      const s = d.stream;
+    const lives = livesOf(d);
+    if (lives.length) {
       pill.innerHTML = '<span class="dot"></span>EN LIVE';
       pill.className = "pill live";
-      el.innerHTML = `
-        <div class="stream-card">
-          <a class="thumb-wrap" href="https://twitch.tv/${CONFIG.twitchLogin}" target="_blank">
-            ${s.thumbnail ? `<img src="${s.thumbnail}?_=${Date.now()}" alt="">` : ""}
-            <span class="badge-live"><span class="dot"></span>LIVE</span>
-            <span class="badge-time">⏱ ${uptime(s.startedAt)}</span>
-          </a>
-          <div class="card-body">
-            <div class="card-title">${escapeHtml(s.title || "")}</div>
-            <div class="meta-row">
-              <span class="chip mint">👁 <b>${fmtNumber(s.viewers)}</b> viewers</span>
-              ${s.game ? `<span class="chip">🎮 ${escapeHtml(s.game)}</span>` : ""}
-            </div>
-            <a class="watch-btn" href="https://twitch.tv/${CONFIG.twitchLogin}" target="_blank">Regarder le live</a>
-          </div>
-        </div>`;
+      el.innerHTML =
+        (lives.length > 1 ? `<div class="section-label">En live sur ${lives.length} plateformes</div>` : "") +
+        lives.map((l) => (l.platform === "twitch" ? twitchLiveCard(l) : otherLiveCard(l))).join("");
     } else {
       pill.textContent = "HORS LIGNE";
       pill.className = "pill off";

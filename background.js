@@ -48,15 +48,39 @@ async function ensureDefaults() {
   }
 }
 
+// ---------- Lives (Twitch, Patreon...) ----------
+// Le serveur renvoie la liste des lives en cours (status.lives). Une plateforme inconnue de cette
+// version de l'extension fonctionne quand meme : son nom vient alors du serveur (l.platformName).
+const PLATFORM_NAME = { twitch: "Twitch", patreon: "Patreon" };
+const platformName = (l) => l.platformName || PLATFORM_NAME[l.platform] || l.platform;
+
+function httpsOnly(u) {
+  try {
+    return new URL(String(u)).protocol === "https:" ? String(u) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function livesOf(status, cfg) {
+  if (status && Array.isArray(status.lives)) return status.lives.filter((l) => l && l.platform);
+  // Ancien format du serveur : Twitch seulement.
+  if (status && status.live && status.stream) {
+    return [{ platform: "twitch", title: status.stream.title, url: "https://twitch.tv/" + cfg.twitchLogin }];
+  }
+  return [];
+}
+
 // ---------- Badge ----------
-async function setLive() {
+async function setLive(lives) {
   await chrome.action.setIcon({
     path: { 16: "icons/icon-16.png", 32: "icons/icon-32.png", 48: "icons/icon-48.png", 128: "icons/icon-128.png" }
   });
   await chrome.action.setBadgeBackgroundColor({ color: "#B9E2CE" });
   await chrome.action.setBadgeTextColor?.({ color: "#16151c" });
   await chrome.action.setBadgeText({ text: "LIVE" });
-  await chrome.action.setTitle({ title: "TVABDOU est EN LIVE !" });
+  const where = lives.map(platformName).join(" et ");
+  await chrome.action.setTitle({ title: "TVABDOU est EN LIVE" + (where ? " sur " + where : "") + " !" });
 }
 
 async function setOffline() {
@@ -132,25 +156,31 @@ async function poll() {
   // Nouvelle version de l'extension a installer (rare : l'interface, elle, se met a jour seule).
   await checkExtensionUpdate(CONFIG).catch(() => {});
 
-  // --- Live ---
+  // --- Lives (une notification au debut de chaque live, par plateforme) ---
   try {
     const status = await getStatus();
-    const prev = (await chrome.storage.local.get("wasLive")).wasLive || false;
-    if (status.live && status.stream) {
-      await setLive();
-      if (!prev) {
-        await notify(
-          "live-" + Date.now(),
-          "TVABDOU est EN LIVE ! 🔴",
-          status.stream.title || "Rejoins le stream",
-          "https://twitch.tv/" + CONFIG.twitchLogin
-        );
-      }
-      await chrome.storage.local.set({ wasLive: true });
-    } else {
-      await setOffline();
-      await chrome.storage.local.set({ wasLive: false });
+    const lives = livesOf(status, CONFIG);
+    const stored = await chrome.storage.local.get(["livePlatforms", "wasLive"]);
+    // Reprise de l'ancien stockage (Twitch seulement) : pas de notification en double a la mise a jour.
+    const known = Array.isArray(stored.livePlatforms) ? stored.livePlatforms : stored.wasLive ? ["twitch"] : [];
+
+    if (lives.length) await setLive(lives);
+    else await setOffline();
+
+    for (const l of lives) {
+      if (known.includes(l.platform)) continue;
+      const twitch = l.platform === "twitch";
+      await notify(
+        "live-" + l.platform + "-" + Date.now(),
+        l.notifyTitle || (twitch ? "TVABDOU est EN LIVE ! 🔴" : "TVABDOU est en live sur " + platformName(l) + " ! 🔴"),
+        l.title || "Rejoins le live",
+        httpsOnly(l.url) || (twitch ? "https://twitch.tv/" + CONFIG.twitchLogin : undefined)
+      );
     }
+    await chrome.storage.local.set({
+      livePlatforms: lives.map((l) => l.platform),
+      wasLive: lives.some((l) => l.platform === "twitch")
+    });
   } catch (e) {
     console.warn("poll live:", e.message);
   }

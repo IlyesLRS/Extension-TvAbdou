@@ -16,8 +16,12 @@ Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
 
 ## ✨ Fonctionnalités
 
-- 🔴 **Badge d'état** sur l'icône : `LIVE` (menthe) quand il stream, `OFF` sinon.
-  L'icône est l'avatar de TVABDOU.
+- 🔴 **Badge d'état** sur l'icône : `LIVE` (menthe) quand il stream sur **Twitch ou Patreon**,
+  `OFF` sinon. L'icône est l'avatar de TVABDOU.
+- Ⓟ **Lives Patreon** : carte « En live sur Patreon » (avec bouton *Rejoindre*), badge et
+  notification, comme pour Twitch. Signalés depuis la page privée
+  [`/live-patreon`](https://extension-tvabdou.vercel.app/live-patreon) (connexion avec le compte
+  Patreon TVABDOU) ; la détection automatique viendra après observation d'un premier live.
 - 📺 **Onglet Live / Rediffs**
   - En live : miniature, titre, nombre de viewers et **durée du stream**.
   - Hors ligne : les **3 derniers lives passés et temps forts** (date, durée, vues).
@@ -30,7 +34,7 @@ Lavande `#C9BCF1` · Menthe `#B9E2CE` · Noir & blanc en appui.
 - Ⓟ **Onglet Patreon** : les **3 dernières publications Patreon**.
 - 🔗 **Réseaux** (Twitch, les 3 chaînes YouTube avec leur vraie photo de profil,
   Patreon, Discord) accessibles sur chaque onglet.
-- 🔔 **Notifications** au passage en live, à chaque nouvelle vidéo sur **l'une des
+- 🔔 **Notifications** au passage en live (Twitch ou Patreon), à chaque nouvelle vidéo sur **l'une des
   chaînes YouTube** (le nom de la chaîne est indiqué) et à chaque nouvelle publication
   Patreon, avec un bouton pour les activer / couper.
 - ↻ **Bouton Actualiser** pour recharger les données à la demande (sans cache).

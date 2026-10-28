@@ -269,3 +269,13 @@ main {
 .update-bar[hidden] { display: none; }
 .update-bar a { color: var(--secondary); text-decoration: none; white-space: nowrap; }
 .update-bar a:hover { text-decoration: underline; }
+
+/* ---------- Live sur une autre plateforme que Twitch (Patreon...) ---------- */
+.stream-card + .stream-card { margin-top: 12px; }
+.thumb-wrap.live-art {
+  aspect-ratio: 16/9; display: grid; place-items: center; text-decoration: none;
+  background: linear-gradient(135deg, var(--primary-deep) 0%, var(--secondary-deep) 100%);
+}
+.live-art-icon { color: #fff; opacity: .95; }
+.live-art-icon svg { width: 64px; height: 64px; display: block; }
+

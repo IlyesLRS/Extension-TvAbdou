@@ -3,6 +3,7 @@
 import { connectWithCode } from "../lib/patreon.js";
 import { SITE_CONFIG } from "../lib/site-config.js";
 import { page, esc } from "../lib/page.js";
+import { adminCookie } from "../lib/admin.js";
 
 // Nom de la campagne attendue : celui du lien Patreon de site-config (patreon.com/c/TVABDOU),
 // surchargeable par PATREON_CAMPAIGN_VANITY.
@@ -29,6 +30,7 @@ function send(res, status, opts) {
 }
 
 const RETRY = { href: "/connecter-patreon", label: "Recommencer" };
+const CLEAR_STATE = "patreon_state=; Path=/api; Max-Age=0; HttpOnly; Secure; SameSite=Lax";
 
 export default async function handler(req, res) {
   const q = req.query || {};
@@ -49,8 +51,17 @@ export default async function handler(req, res) {
       button: RETRY
     });
   }
+  const admin = String(q.state).startsWith("admin.");
   try {
     const r = await connectWithCode(q.code, expectedVanity());
+    if (admin) {
+      // Connexion pour la page privee du live : on ouvre la session puis on y retourne.
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("Set-Cookie", [CLEAR_STATE, adminCookie(r.campaign)]);
+      res.statusCode = 303;
+      res.setHeader("Location", "/live-patreon");
+      return res.end();
+    }
     return send(res, 200, {
       icon: "✅",
       heading: "Patreon est connecté",
@@ -65,7 +76,7 @@ export default async function handler(req, res) {
       icon: "⚠️",
       heading: "La connexion n'a pas abouti",
       body: `<p>${esc(e.message)}</p>`,
-      button: RETRY
+      button: admin ? { href: "/connecter-patreon?mode=admin", label: "Recommencer" } : RETRY
     });
   }
 }

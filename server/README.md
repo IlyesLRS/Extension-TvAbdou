@@ -10,8 +10,21 @@ L'extension appelle uniquement ce proxy, donc aucune clé n'est exposée.
   jour pour tout le monde, sans réinstallation. Une copie du même dossier est embarquée dans
   le zip de l'extension et prend le relais si le serveur ne répond pas.
 
+## Live Patreon
+- `GET /live-patreon` → **page privée** pour signaler un live Patreon (titre et lien facultatifs,
+  bouton « Fin du live », arrêt automatique après 12 h). Accès après connexion Patreon avec le
+  compte propriétaire de la campagne TVABDOU (session de 12 h, cookie signé).
+- L'état est rangé dans la table privée `public.ext_patreon_live` (Supabase reseaux-tvabdou) et
+  renvoyé par `/api/status` dans `lives` (voir ci-dessous).
+- **Enregistreur** : à chaque lecture des posts, les 5 derniers sont notés dans
+  `public.ext_patreon_post_log` (tous les champs documentés, `live_on` = un live était signalé).
+  Au prochain live, ce journal montrera à quoi ressemble un live dans l'API, pour ajouter la
+  détection automatique. Purge après 90 jours (cron).
+
 ## Endpoints
-- `GET /api/status` → `{ live, stream, vods, vod }` — statut live ; hors ligne, `vods`
+- `GET /api/status` → `{ lives, live, stream, vods, vod }` — `lives` = lives en cours toutes
+  plateformes (`[{ platform: "twitch" | "patreon", title, url, startedAt, ... }]`) ;
+  `live` / `stream` = Twitch seul (anciennes versions de l'extension) ; hors ligne Twitch, `vods`
   contient les **3 derniers lives passés et temps forts** (types Twitch `archive` et
   `highlight` ; les vidéos téléversées et les clips sont exclus). `vod` = `vods[0]`,
   conservé pour compatibilité avec les anciennes versions de l'extension.

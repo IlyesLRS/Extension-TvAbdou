@@ -26,6 +26,21 @@ export function page({ title, icon = "", heading, body = "", button = null }) {
   .content { padding:20px 24px 24px; }
   .content p { margin:0 0 10px; }
   .muted { color:var(--muted); font-size:14px; }
+  form { margin:14px 0 0; }
+  label { display:block; font-weight:700; font-size:14px; margin:10px 0 4px; }
+  input[type=text], input[type=url] { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+          background:var(--bg); color:var(--ink); font:inherit; }
+  .hint { color:var(--muted); font-size:13px; margin-top:4px; }
+  button { margin-top:14px; width:100%; padding:12px 16px; border:0; border-radius:12px; cursor:pointer;
+           font:inherit; font-weight:800; color:#fff; background:linear-gradient(120deg, #8f74e0, #3fae7d); }
+  button.stop { background:#17151f; }
+  @media (prefers-color-scheme: dark) { button.stop { background:#ebe9f3; color:#17151f; } }
+  .state { display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; background:var(--bg);
+           border:1px solid var(--border); font-weight:700; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#a29db5; flex:none; }
+  .dot.on { background:#3fae7d; box-shadow:0 0 0 4px rgba(63,174,125,.25); }
+  .foot { margin-top:16px; font-size:13px; color:var(--muted); }
+  .foot a { color:var(--deep); }
   a.btn { display:inline-block; margin-top:8px; padding:11px 18px; border-radius:12px; text-decoration:none;
           font-weight:800; color:#fff; background:linear-gradient(120deg, #8f74e0, #3fae7d); }
 </style>

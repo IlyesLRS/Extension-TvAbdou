@@ -1,8 +1,13 @@
 // GET /api/patreon -> 3 dernieres publications Patreon du createur.
 // Authentification et renouvellement du jeton : ../lib/patreon.js
 import { patreonGet as pget, isConfigured, API } from "../lib/patreon.js";
+import { recordPosts } from "../lib/patreon-log.js";
+import { getPatreonLive } from "../lib/live.js";
 
-const FIELDS = "fields%5Bpost%5D=title,url,published_at,embed_url,is_public";
+// Tous les champs documentes d'un post (sauf le contenu, trop lourd sur toutes les pages) :
+// ils alimentent aussi l'enregistreur qui sert a reperer les lives. Repli sur le minimum si refus.
+const FIELDS_FULL = "fields%5Bpost%5D=title,url,published_at,embed_url,embed_data,is_public,is_paid,app_id,app_status";
+const FIELDS_BASIC = "fields%5Bpost%5D=title,url,published_at,embed_url,is_public";
 
 let campaignCache = null;
 
@@ -17,6 +22,15 @@ async function getCampaignId() {
 // L'API renvoie les posts du plus ancien au plus recent et ignore ?sort,
 // donc on pagine jusqu'au bout puis on trie nous-memes par date decroissante.
 async function fetchAllPosts(id) {
+  try {
+    return await fetchAllPostsWith(id, FIELDS_FULL);
+  } catch (e) {
+    if (e.status === 400) return fetchAllPostsWith(id, FIELDS_BASIC);
+    throw e;
+  }
+}
+
+async function fetchAllPostsWith(id, FIELDS) {
   let next = `${API}/campaigns/${id}/posts?${FIELDS}&page%5Bcount%5D=100`;
   const all = [];
   for (let i = 0; i < 20 && next; i++) {
@@ -60,6 +74,9 @@ export default async function handler(req, res) {
       const db = new Date((b.attributes && b.attributes.published_at) || 0).getTime();
       return db - da; // plus recent d'abord
     });
+    // Enregistreur (detection automatique des lives a venir) : n'empeche jamais la reponse.
+    await recordPosts(all, Boolean(await getPatreonLive())).catch(() => {});
+
     const posts = all.slice(0, 3).map((p) => {
       const a = p.attributes || {};
       return {

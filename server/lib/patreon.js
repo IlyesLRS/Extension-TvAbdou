@@ -12,7 +12,7 @@
 //   PATREON_ACCESS_TOKEN / PATREON_REFRESH_TOKEN - jetons de depart. S'ils changent dans
 //     Vercel (jetons neufs colles a la main), ils remplacent automatiquement ceux du stockage.
 import { createHash } from "node:crypto";
-import { storeEnabled, storeMisconfigured, keyKind, readRow, updateRow, tryLock } from "./store.js";
+import { storeEnabled, storeMisconfigured, keyKind, readRow, updateRow, tryLock, prunePostLog } from "./store.js";
 import { alertEnabled, sendAlert } from "./alert.js";
 
 // .trim() : un espace ou un retour a la ligne colle avec un jeton le rend invalide.
@@ -336,6 +336,7 @@ export async function maintenance() {
     }
     await patreonGet(API + "/campaigns");
     out.ok = true;
+    if (storeEnabled) await prunePostLog(90).catch(() => {}); // journal des posts : 90 jours max
   } catch (e) {
     out.ok = false;
     out.error = e.message;

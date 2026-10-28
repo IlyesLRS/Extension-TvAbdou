@@ -14,6 +14,10 @@
     {
       "source": "/connecter-patreon",
       "destination": "/api/patreon-connect"
+    },
+    {
+      "source": "/live-patreon",
+      "destination": "/api/live-admin"
     }
   ],
   "headers": [

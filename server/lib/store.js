@@ -80,3 +80,36 @@ export async function tryLock(seconds = 30) {
   const rows = await rest("POST", "rpc/ext_patreon_lock", { lease_seconds: seconds });
   return (Array.isArray(rows) && rows[0]) || null;
 }
+
+// ---------- Live Patreon (table ext_patreon_live, ligne unique id=1) ----------
+export async function readLive() {
+  const rows = await rest("GET", "ext_patreon_live?id=eq.1&select=*");
+  if (rows && rows[0]) return rows[0];
+  const created = await rest("POST", "ext_patreon_live", { id: 1 }, {
+    Prefer: "resolution=merge-duplicates,return=representation"
+  });
+  return (created && created[0]) || { id: 1, is_live: false };
+}
+
+export async function writeLive(patch) {
+  const rows = await rest("PATCH", "ext_patreon_live?id=eq.1", { ...patch, updated_at: new Date().toISOString() }, {
+    Prefer: "return=representation"
+  });
+  return (rows && rows[0]) || null;
+}
+
+// ---------- Journal des posts Patreon (table ext_patreon_post_log) ----------
+// rows : [{ post_id, live_on, attributes, attr_hash }] ; les doublons (meme post, memes valeurs) sont ignores.
+export async function logPosts(rows) {
+  if (!rows.length) return;
+  await rest("POST", "ext_patreon_post_log?on_conflict=post_id,attr_hash", rows, {
+    Prefer: "resolution=ignore-duplicates,return=minimal"
+  });
+}
+
+export async function prunePostLog(days = 90) {
+  const before = new Date(Date.now() - days * 86400000).toISOString();
+  await rest("DELETE", "ext_patreon_post_log?captured_at=lt." + encodeURIComponent(before), undefined, {
+    Prefer: "return=minimal"
+  });
+}
